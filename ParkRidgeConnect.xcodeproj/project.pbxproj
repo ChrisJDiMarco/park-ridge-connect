@@ -1,0 +1,454 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A20000000000000000000001 /* ParkRidgeConnectApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* ParkRidgeConnectApp.swift */; };
+		A20000000000000000000002 /* TownModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000002 /* TownModels.swift */; };
+		A20000000000000000000003 /* ParkRidgeSeedData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000003 /* ParkRidgeSeedData.swift */; };
+		A20000000000000000000004 /* BoroughRefreshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000004 /* BoroughRefreshService.swift */; };
+		A20000000000000000000005 /* TownAIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000005 /* TownAIService.swift */; };
+		A20000000000000000000006 /* VoiceServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000006 /* VoiceServices.swift */; };
+		A20000000000000000000007 /* TownStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* TownStore.swift */; };
+		A20000000000000000000008 /* TownTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000008 /* TownTheme.swift */; };
+		A20000000000000000000009 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000009 /* Components.swift */; };
+		A20000000000000000000010 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000010 /* HomeView.swift */; };
+		A20000000000000000000011 /* ExploreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000011 /* ExploreView.swift */; };
+		A20000000000000000000012 /* AssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000012 /* AssistantView.swift */; };
+		A20000000000000000000013 /* ServicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000013 /* ServicesView.swift */; };
+		A20000000000000000000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000014 /* Assets.xcassets */; };
+		A20000000000000000000015 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
+		A20000000000000000000016 /* TownAIServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000016 /* TownAIServiceTests.swift */; };
+		A20000000000000000000017 /* ParkRidgeWeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000017 /* ParkRidgeWeatherService.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C20000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = P20000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B20000000000000000000001;
+			remoteInfo = ParkRidgeConnect;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		F20000000000000000000001 /* ParkRidgeConnectApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkRidgeConnectApp.swift; sourceTree = "<group>"; };
+		F20000000000000000000002 /* TownModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownModels.swift; sourceTree = "<group>"; };
+		F20000000000000000000003 /* ParkRidgeSeedData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkRidgeSeedData.swift; sourceTree = "<group>"; };
+		F20000000000000000000004 /* BoroughRefreshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoroughRefreshService.swift; sourceTree = "<group>"; };
+		F20000000000000000000005 /* TownAIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownAIService.swift; sourceTree = "<group>"; };
+		F20000000000000000000006 /* VoiceServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceServices.swift; sourceTree = "<group>"; };
+		F20000000000000000000007 /* TownStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownStore.swift; sourceTree = "<group>"; };
+		F20000000000000000000008 /* TownTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownTheme.swift; sourceTree = "<group>"; };
+		F20000000000000000000009 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		F20000000000000000000010 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		F20000000000000000000011 /* ExploreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreView.swift; sourceTree = "<group>"; };
+		F20000000000000000000012 /* AssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantView.swift; sourceTree = "<group>"; };
+		F20000000000000000000013 /* ServicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesView.swift; sourceTree = "<group>"; };
+		F20000000000000000000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F20000000000000000000015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F20000000000000000000016 /* TownAIServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownAIServiceTests.swift; sourceTree = "<group>"; };
+		F20000000000000000000017 /* ParkRidgeWeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkRidgeWeatherService.swift; sourceTree = "<group>"; };
+		F20000000000000000000020 /* ParkRidgeConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParkRidgeConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F20000000000000000000021 /* ParkRidgeConnectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ParkRidgeConnectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		BF2000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BF2000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		G20000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				G20000000000000000000002 /* ParkRidgeConnect */,
+				G20000000000000000000008 /* ParkRidgeConnectTests */,
+				G20000000000000000000009 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G20000000000000000000002 /* ParkRidgeConnect */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000001 /* ParkRidgeConnectApp.swift */,
+				G20000000000000000000003 /* Models */,
+				G20000000000000000000004 /* Services */,
+				G20000000000000000000005 /* ViewModels */,
+				G20000000000000000000006 /* Views */,
+				G20000000000000000000007 /* Resources */,
+			);
+			path = ParkRidgeConnect;
+			sourceTree = "<group>";
+		};
+		G20000000000000000000003 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000002 /* TownModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		G20000000000000000000004 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000003 /* ParkRidgeSeedData.swift */,
+				F20000000000000000000004 /* BoroughRefreshService.swift */,
+				F20000000000000000000017 /* ParkRidgeWeatherService.swift */,
+				F20000000000000000000005 /* TownAIService.swift */,
+				F20000000000000000000006 /* VoiceServices.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		G20000000000000000000005 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000007 /* TownStore.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		G20000000000000000000006 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000008 /* TownTheme.swift */,
+				F20000000000000000000009 /* Components.swift */,
+				F20000000000000000000010 /* HomeView.swift */,
+				F20000000000000000000011 /* ExploreView.swift */,
+				F20000000000000000000012 /* AssistantView.swift */,
+				F20000000000000000000013 /* ServicesView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		G20000000000000000000007 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000014 /* Assets.xcassets */,
+				F20000000000000000000015 /* PrivacyInfo.xcprivacy */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		G20000000000000000000008 /* ParkRidgeConnectTests */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000016 /* TownAIServiceTests.swift */,
+			);
+			path = ParkRidgeConnectTests;
+			sourceTree = "<group>";
+		};
+		G20000000000000000000009 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F20000000000000000000020 /* ParkRidgeConnect.app */,
+				F20000000000000000000021 /* ParkRidgeConnectTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		B20000000000000000000001 /* ParkRidgeConnect */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L20000000000000000000002 /* Build configuration list for PBXNativeTarget "ParkRidgeConnect" */;
+			buildPhases = (
+				S20000000000000000000001 /* Sources */,
+				BF2000000000000000000001 /* Frameworks */,
+				R20000000000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ParkRidgeConnect;
+			productName = ParkRidgeConnect;
+			productReference = F20000000000000000000020 /* ParkRidgeConnect.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B20000000000000000000002 /* ParkRidgeConnectTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = L20000000000000000000003 /* Build configuration list for PBXNativeTarget "ParkRidgeConnectTests" */;
+			buildPhases = (
+				S20000000000000000000002 /* Sources */,
+				BF2000000000000000000002 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D20000000000000000000001 /* PBXTargetDependency */,
+			);
+			name = ParkRidgeConnectTests;
+			productName = ParkRidgeConnectTests;
+			productReference = F20000000000000000000021 /* ParkRidgeConnectTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		P20000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2650;
+				LastUpgradeCheck = 2650;
+				TargetAttributes = {
+					B20000000000000000000001 = {
+						CreatedOnToolsVersion = 26.5;
+					};
+					B20000000000000000000002 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = B20000000000000000000001;
+					};
+				};
+			};
+			buildConfigurationList = L20000000000000000000001 /* Build configuration list for PBXProject "ParkRidgeConnect" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G20000000000000000000001;
+			productRefGroup = G20000000000000000000009 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B20000000000000000000001 /* ParkRidgeConnect */,
+				B20000000000000000000002 /* ParkRidgeConnectTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		R20000000000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A20000000000000000000014 /* Assets.xcassets in Resources */,
+				A20000000000000000000015 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		S20000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A20000000000000000000001 /* ParkRidgeConnectApp.swift in Sources */,
+				A20000000000000000000002 /* TownModels.swift in Sources */,
+				A20000000000000000000003 /* ParkRidgeSeedData.swift in Sources */,
+				A20000000000000000000004 /* BoroughRefreshService.swift in Sources */,
+				A20000000000000000000017 /* ParkRidgeWeatherService.swift in Sources */,
+				A20000000000000000000005 /* TownAIService.swift in Sources */,
+				A20000000000000000000006 /* VoiceServices.swift in Sources */,
+				A20000000000000000000007 /* TownStore.swift in Sources */,
+				A20000000000000000000008 /* TownTheme.swift in Sources */,
+				A20000000000000000000009 /* Components.swift in Sources */,
+				A20000000000000000000010 /* HomeView.swift in Sources */,
+				A20000000000000000000011 /* ExploreView.swift in Sources */,
+				A20000000000000000000012 /* AssistantView.swift in Sources */,
+				A20000000000000000000013 /* ServicesView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		S20000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A20000000000000000000016 /* TownAIServiceTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D20000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B20000000000000000000001 /* ParkRidgeConnect */;
+			targetProxy = C20000000000000000000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		X20000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		X20000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		X20000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4X5MZ8MGH9;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Park Ridge Connect";
+				INFOPLIST_KEY_ELEVENLABS_API_KEY = "";
+				INFOPLIST_KEY_ELEVENLABS_VOICE_ID = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Park Ridge Connect uses the microphone so residents can ask the town assistant questions by voice.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Park Ridge Connect uses speech recognition to turn spoken town questions into text.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chrisdimarco.ParkRidgeConnect;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		X20000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4X5MZ8MGH9;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Park Ridge Connect";
+				INFOPLIST_KEY_ELEVENLABS_API_KEY = "";
+				INFOPLIST_KEY_ELEVENLABS_VOICE_ID = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Park Ridge Connect uses the microphone so residents can ask the town assistant questions by voice.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Park Ridge Connect uses speech recognition to turn spoken town questions into text.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chrisdimarco.ParkRidgeConnect;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		X20000000000000000000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4X5MZ8MGH9;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chrisdimarco.ParkRidgeConnectTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ParkRidgeConnect.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ParkRidgeConnect";
+			};
+			name = Debug;
+		};
+		X20000000000000000000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4X5MZ8MGH9;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chrisdimarco.ParkRidgeConnectTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ParkRidgeConnect.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ParkRidgeConnect";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		L20000000000000000000001 /* Build configuration list for PBXProject "ParkRidgeConnect" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X20000000000000000000001 /* Debug */,
+				X20000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L20000000000000000000002 /* Build configuration list for PBXNativeTarget "ParkRidgeConnect" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X20000000000000000000003 /* Debug */,
+				X20000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		L20000000000000000000003 /* Build configuration list for PBXNativeTarget "ParkRidgeConnectTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				X20000000000000000000005 /* Debug */,
+				X20000000000000000000006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = P20000000000000000000001 /* Project object */;
+}
