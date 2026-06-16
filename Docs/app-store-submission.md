@@ -11,6 +11,12 @@ Last updated: 2026-06-16
 - Category: Lifestyle
 - Minimum iOS: 17.0
 - Devices: iPhone
+- Privacy Policy URL:
+  `https://chrisjdimarco.github.io/park-ridge-connect-catalog/privacy/`
+- Support URL:
+  `https://chrisjdimarco.github.io/park-ridge-connect-catalog/support/`
+
+Use `Docs/app-store-metadata.md` as the App Store Connect copy sheet.
 
 ## Required Backend Setting
 
@@ -53,6 +59,7 @@ Checked on 2026-06-16:
 - Production catalog URL is live:
   `https://chrisjdimarco.github.io/park-ridge-connect-catalog/place-directory/park-ridge-places.json`
   returns HTTP 200 and 35 places.
+- Privacy policy and support URLs are live and return HTTP 200.
 - `Docs/place-directory/park-ridge-places.json` is valid JSON and contains 35
   decoded Park Ridge places.
 - `Tools/place-directory/build_catalog.py` compiles and keeps the last-good
@@ -84,7 +91,8 @@ uses Apple platform speech APIs.
 If `ELEVENLABS_API_KEY` is set for a release build, re-answer privacy before
 submission because spoken/read-aloud prompts may send text to ElevenLabs.
 
-Privacy policy URL is still required in App Store Connect for iOS apps.
+Privacy policy URL to enter in App Store Connect:
+`https://chrisjdimarco.github.io/park-ridge-connect-catalog/privacy/`
 
 Official privacy guidance:
 
@@ -120,8 +128,11 @@ https://developer.apple.com/help/app-store-connect/manage-app-information/upload
 
 - [x] Public catalog URL loads without authentication.
 - [x] `TOWN_PLACE_CATALOG_URL` is set for the archive submitted to App Store Connect.
+- [x] Public privacy policy URL exists.
+- [x] Public support URL exists.
+- [x] App Store metadata draft is prepared in `Docs/app-store-metadata.md`.
 - [ ] App Store distribution signing/export succeeds, not just local development signing.
 - [ ] App Privacy answers are published and match the exact build configuration.
-- [ ] Privacy policy URL is present in App Store Connect.
+- [ ] Privacy policy and support URLs are entered in App Store Connect.
 - [ ] Screenshots are uploaded.
 - [ ] Review notes include the data-source/cached-fallback explanation above.
