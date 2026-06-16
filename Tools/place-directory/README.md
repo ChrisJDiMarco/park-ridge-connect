@@ -32,6 +32,7 @@ The output shape is:
 {
   "generatedAt": "2026-06-16T00:00:00+00:00",
   "source": { "...": "..." },
+  "retrievedFrom": [],
   "supplementalPlaces": { "...": "..." },
   "places": []
 }
@@ -39,6 +40,9 @@ The output shape is:
 
 `places` is an array of `LocalPlace` JSON objects, so the iOS app can decode it
 directly through `PlaceDirectoryRefreshService`.
+Before submission, `Tools/app-store/verify_submission_readiness.sh` checks that
+the checked-in and live catalogs were generated recently and include
+OpenStreetMap/Overpass provenance plus source metadata on every place.
 
 ## Production setup
 

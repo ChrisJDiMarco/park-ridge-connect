@@ -15,6 +15,7 @@ EXPORT_OPTIONS_PLIST="${EXPORT_OPTIONS_PLIST:-Tools/app-store/ExportOptions-AppS
 UPLOAD_OPTIONS_PLIST="${UPLOAD_OPTIONS_PLIST:-Tools/app-store/UploadOptions-AppStoreConnect.plist}"
 SIMULATOR_DESTINATION="${SIMULATOR_DESTINATION:-platform=iOS Simulator,name=iPhone 17}"
 MINIMUM_PLACE_COUNT="${MINIMUM_PLACE_COUNT:-50}"
+MAX_CATALOG_AGE_HOURS="${MAX_CATALOG_AGE_HOURS:-72}"
 
 failures=0
 distribution_signing_available=0
@@ -44,22 +45,128 @@ http_status() {
   curl -L -s -o /dev/null -w '%{http_code}' "$1"
 }
 
+catalog_generated_at_epoch() {
+  python3 - "$1" <<'PY'
+import datetime
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    catalog = json.load(handle)
+
+generated_at = catalog.get("generatedAt")
+if not isinstance(generated_at, str) or not generated_at:
+    raise SystemExit("missing generatedAt")
+
+timestamp = generated_at.replace("Z", "+00:00")
+try:
+    parsed = datetime.datetime.fromisoformat(timestamp)
+except ValueError as error:
+    raise SystemExit(f"invalid generatedAt: {error}") from error
+
+if parsed.tzinfo is None:
+    parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+
+print(int(parsed.timestamp()))
+PY
+}
+
+check_catalog_contents() {
+  local catalog="$1"
+  local label="$2"
+
+  if jq -e --argjson minimum "$MINIMUM_PLACE_COUNT" '
+    (.places | length) >= $minimum and
+    (([.places[].category] | unique) as $categories |
+      ["Food", "Services", "Schools", "Library", "Kids", "Recreation"] |
+      all(. as $required | $categories | index($required))) and
+    all(.places[];
+      (.id | type == "string" and length > 0) and
+      (.name | type == "string" and length > 0) and
+      (.category | type == "string" and length > 0) and
+      (.source.title | type == "string" and length > 0) and
+      (.source.url | type == "string" and length > 0)
+    )
+  ' "$catalog" >/dev/null; then
+    pass "$label has enough places, required categories, and place source metadata"
+  else
+    fail "$label is missing required place count, categories, or place source metadata"
+  fi
+}
+
+check_catalog_provenance() {
+  local catalog="$1"
+  local label="$2"
+
+  if jq -e '
+    (.generatedAt | type == "string" and length > 0) and
+    (.source.title == "OpenStreetMap") and
+    (.source.url == "https://www.openstreetmap.org/copyright") and
+    (.retrievedFrom | type == "array" and length > 0 and all(.[]; type == "string" and test("https://"))) and
+    (.supplementalPlaces.source == "curated Park Ridge seed catalog") and
+    (.warnings | type == "array")
+  ' "$catalog" >/dev/null; then
+    pass "$label includes generatedAt, OSM/Overpass provenance, and supplemental source metadata"
+  else
+    fail "$label is missing generatedAt, OSM/Overpass provenance, or supplemental source metadata"
+  fi
+}
+
+check_catalog_recency() {
+  local catalog="$1"
+  local label="$2"
+
+  if ! [[ "$MAX_CATALOG_AGE_HOURS" =~ ^[0-9]+$ ]]; then
+    fail "MAX_CATALOG_AGE_HOURS must be a whole number, got: $MAX_CATALOG_AGE_HOURS"
+    return
+  fi
+
+  local generated_epoch
+  if ! generated_epoch="$(catalog_generated_at_epoch "$catalog" 2>/dev/null)"; then
+    fail "$label generatedAt is missing or not parseable as ISO-8601"
+    return
+  fi
+
+  local now_epoch max_age_seconds age_seconds age_hours future_tolerance_seconds
+  now_epoch="$(date -u +%s)"
+  max_age_seconds=$((MAX_CATALOG_AGE_HOURS * 3600))
+  age_seconds=$((now_epoch - generated_epoch))
+  future_tolerance_seconds=300
+
+  if (( age_seconds < -future_tolerance_seconds )); then
+    fail "$label generatedAt is more than five minutes in the future"
+    return
+  fi
+
+  if (( age_seconds > max_age_seconds )); then
+    age_hours=$(((age_seconds + 3599) / 3600))
+    fail "$label is ${age_hours}h old; maximum allowed is ${MAX_CATALOG_AGE_HOURS}h"
+  else
+    if (( age_seconds < 0 )); then
+      age_hours=0
+    else
+      age_hours=$((age_seconds / 3600))
+    fi
+    pass "$label was generated within ${MAX_CATALOG_AGE_HOURS}h (${age_hours}h old)"
+  fi
+}
+
+check_catalog_quality() {
+  local catalog="$1"
+  local label="$2"
+
+  check_catalog_contents "$catalog" "$label"
+  check_catalog_provenance "$catalog" "$label"
+  check_catalog_recency "$catalog" "$label"
+}
+
 check_local_catalog() {
   log "Checking local catalog files"
   python3 -m py_compile Tools/place-directory/build_catalog.py || fail "Catalog builder does not compile"
   python3 -m json.tool Docs/place-directory/park-ridge-places.json >/dev/null || fail "Checked-in catalog is invalid JSON"
   python3 -m json.tool Docs/place-directory/park-ridge-supplemental-places.json >/dev/null || fail "Supplemental catalog is invalid JSON"
 
-  if jq -e --argjson minimum "$MINIMUM_PLACE_COUNT" '
-    (.places | length) >= $minimum and
-    (([.places[].category] | unique) as $categories |
-      ["Food", "Services", "Schools", "Library", "Kids", "Recreation"] |
-      all(. as $required | $categories | index($required)))
-  ' Docs/place-directory/park-ridge-places.json >/dev/null; then
-    pass "Checked-in catalog has enough places and required categories"
-  else
-    fail "Checked-in catalog is missing required place count or categories"
-  fi
+  check_catalog_quality Docs/place-directory/park-ridge-places.json "Checked-in catalog"
 }
 
 check_export_options() {
@@ -151,16 +258,7 @@ check_live_urls() {
   local live_catalog
   live_catalog="$(mktemp)"
   if curl -L -f -s "$CATALOG_URL" -o "$live_catalog"; then
-    if jq -e --argjson minimum "$MINIMUM_PLACE_COUNT" '
-      (.places | length) >= $minimum and
-      (([.places[].category] | unique) as $categories |
-        ["Food", "Services", "Schools", "Library", "Kids", "Recreation"] |
-        all(. as $required | $categories | index($required)))
-    ' "$live_catalog" >/dev/null; then
-      pass "Live catalog has enough places and required categories"
-    else
-      fail "Live catalog is missing required place count or categories"
-    fi
+    check_catalog_quality "$live_catalog" "Live catalog"
   else
     fail "Live catalog URL could not be fetched"
   fi

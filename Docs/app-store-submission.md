@@ -36,6 +36,9 @@ Current production URL checked on 2026-06-16: the public catalog URL returns
 HTTP 200 and 54 places. It is hosted from the public
 `ChrisJDiMarco/park-ridge-connect-catalog` repository so the app source can
 remain private while App Review can load the JSON without authentication.
+The submission readiness gate requires the checked-in and live catalogs to have
+a fresh `generatedAt` timestamp, OpenStreetMap/Overpass provenance, curated
+supplemental source metadata, and source metadata on every place.
 
 Archive command once the final public URL is live:
 
@@ -95,9 +98,9 @@ Run the local gate before submission:
 Tools/app-store/verify_submission_readiness.sh
 ```
 
-The script checks local catalog JSON, the live catalog/privacy/support URLs,
-App Store screenshots, simulator tests, archive Info.plist values, and App
-Store Connect IPA export/signing. On this machine, use
+The script checks local catalog JSON, catalog freshness/provenance, the live
+catalog/privacy/support URLs, App Store screenshots, simulator tests, archive
+Info.plist values, and App Store Connect IPA export/signing. On this machine, use
 `ALLOW_PROVISIONING_UPDATES=1` so Xcode can create or download managed signing
 assets during export:
 
