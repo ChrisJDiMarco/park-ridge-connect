@@ -33,7 +33,7 @@ TOWN_PLACE_CATALOG_URL=https://chrisjdimarco.github.io/park-ridge-connect-catalo
 ```
 
 Current production URL checked on 2026-06-16: the public catalog URL returns
-HTTP 200 and 35 places. It is hosted from the public
+HTTP 200 and 54 places. It is hosted from the public
 `ChrisJDiMarco/park-ridge-connect-catalog` repository so the app source can
 remain private while App Review can load the JSON without authentication.
 
@@ -58,10 +58,11 @@ Checked on 2026-06-16:
 
 - Production catalog URL is live:
   `https://chrisjdimarco.github.io/park-ridge-connect-catalog/place-directory/park-ridge-places.json`
-  returns HTTP 200 and 35 places.
+  returns HTTP 200 and 54 places.
 - Privacy policy and support URLs are live and return HTTP 200.
-- `Docs/place-directory/park-ridge-places.json` is valid JSON and contains 35
-  decoded Park Ridge places.
+- `Docs/place-directory/park-ridge-places.json` is valid JSON and contains 54
+  decoded Park Ridge places across food, services, schools, library, kids,
+  recreation, and adult categories.
 - `Tools/place-directory/build_catalog.py` compiles and keeps the last-good
   catalog when live Overpass endpoints are unavailable.
 - `xcodebuild test` passed 30 tests on the iPhone 17 simulator, including the

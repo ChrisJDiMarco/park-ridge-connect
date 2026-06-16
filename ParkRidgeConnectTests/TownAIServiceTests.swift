@@ -547,9 +547,13 @@ final class TownAIServiceTests: XCTestCase {
         let data = try Data(contentsOf: catalogURL)
         let catalog = try JSONDecoder().decode(CheckedInPlaceCatalog.self, from: data)
         let neighboringTownNames = ["Montvale", "Westwood", "Hillsdale", "Woodcliff", "Emerson"]
+        let categories = Set(catalog.places.map(\.category))
 
         XCTAssertGreaterThanOrEqual(catalog.places.count, 20)
-        XCTAssertTrue(catalog.places.allSatisfy { $0.source.title == "OpenStreetMap" })
+        XCTAssertTrue(categories.isSuperset(of: [.food, .services, .schools, .library, .kids, .recreation]))
+        XCTAssertTrue(catalog.places.allSatisfy { !$0.source.title.isEmpty })
+        XCTAssertTrue(catalog.places.contains { $0.source.title == "OpenStreetMap" })
+        XCTAssertTrue(catalog.places.contains { $0.source.title != "OpenStreetMap" })
         XCTAssertFalse(catalog.places.contains { place in
             neighboringTownNames.contains { place.name.localizedCaseInsensitiveContains($0) }
         })
