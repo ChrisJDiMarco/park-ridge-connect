@@ -68,7 +68,7 @@ Rationale: the submitted no-key build has no accounts, ads, analytics SDKs, trac
 
 Park Ridge Connect is a free resident guide for Park Ridge, NJ. No login or account is required.
 
-The app opens to the Today dashboard and fetches public borough, weather, and place-directory data. The place catalog is generated from OpenStreetMap and hosted as JSON at the TOWN_PLACE_CATALOG_URL build setting. If a public data source is temporarily unavailable, the app falls back to cached or bundled public town data and labels that status in the header.
+The app opens to the Today dashboard and fetches public borough, weather, and place-directory data. The place catalog is generated from OpenStreetMap and hosted as JSON at the TOWN_PLACE_CATALOG_URL build setting. If a public data source is temporarily unavailable, the app falls back to cached or bundled public town data so the guide remains usable.
 
 Microphone and speech recognition are optional; the Ask tab also works entirely with typed questions.
 
