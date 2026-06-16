@@ -3,6 +3,7 @@ import XCTest
 
 final class TownAIServiceTests: XCTestCase {
     private let juneThird2026 = Calendar(identifier: .gregorian).date(from: DateComponents(year: 2026, month: 6, day: 3, hour: 12))!
+    private let juneSixteenth2026 = Calendar(identifier: .gregorian).date(from: DateComponents(year: 2026, month: 6, day: 16, hour: 12))!
 
     private var sampleWeather: TownWeatherSnapshot {
         TownWeatherSnapshot(
@@ -180,6 +181,62 @@ final class TownAIServiceTests: XCTestCase {
 
         XCTAssertFalse(events.contains { $0.title.contains("Budget") })
         XCTAssertTrue(events.contains { $0.title.contains("Mayor") })
+    }
+
+    @MainActor
+    func testFeaturedEventsOnlyShowsUpcomingEventsFromToday() {
+        let suiteName = "ParkRidgeConnectTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        let referenceDate = juneSixteenth2026
+        let store = TownStore(defaults: defaults, now: { referenceDate })
+
+        let titles = store.featuredEvents.map(\.title)
+
+        XCTAssertEqual(Array(titles.prefix(3)), [
+            "Park Ridge Summer Camp",
+            "Summer Concert - Rhyme or Reason",
+            "Summer Concert - The Kootz"
+        ])
+        XCTAssertFalse(titles.contains("Town Picnic"))
+        XCTAssertFalse(titles.contains("Mayor & Council Public Meeting"))
+        XCTAssertTrue(store.featuredEvents.allSatisfy { $0.isUpcoming(relativeTo: referenceDate) })
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    func testMultiDayEventStaysUpcomingUntilItsEndDate() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        let event = try XCTUnwrap(ParkRidgeSeedData.events.first { $0.id == "summer-camp-2026" })
+        let range = try XCTUnwrap(event.dateRange(calendar: calendar))
+        let start = calendar.dateComponents([.year, .month, .day], from: range.lowerBound)
+        let end = calendar.dateComponents([.year, .month, .day], from: range.upperBound)
+        let julyFifteenth = calendar.date(from: DateComponents(year: 2026, month: 7, day: 15, hour: 12))!
+
+        XCTAssertEqual(start.year, 2026)
+        XCTAssertEqual(start.month, 6)
+        XCTAssertEqual(start.day, 29)
+        XCTAssertEqual(end.year, 2026)
+        XCTAssertEqual(end.month, 7)
+        XCTAssertEqual(end.day, 31)
+        XCTAssertTrue(event.isUpcoming(relativeTo: julyFifteenth, calendar: calendar))
+    }
+
+    func testTownPulseExcludesPastEventsFromSeedData() {
+        let referenceDate = juneSixteenth2026
+        let service = TownAIService(townName: "Park Ridge", now: { referenceDate })
+        let response = service.answer(
+            question: "What events are coming up this week?",
+            places: ParkRidgeSeedData.places,
+            services: ParkRidgeSeedData.services,
+            events: ParkRidgeSeedData.events,
+            alerts: ParkRidgeSeedData.alerts,
+            notices: ParkRidgeSeedData.notices
+        )
+
+        XCTAssertTrue(response.text.contains("Park Ridge Summer Camp"))
+        XCTAssertFalse(response.text.contains("Town Picnic"))
+        XCTAssertFalse(response.text.contains("Jun 13"))
+        XCTAssertFalse(response.text.contains("Mayor & Council Public Meeting"))
     }
 
     @MainActor

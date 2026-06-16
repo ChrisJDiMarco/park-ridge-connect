@@ -8,13 +8,15 @@ struct TownAIResponse {
 struct TownAIService {
     /// Injected from TownConfig so responses speak the active town's name.
     var townName: String = "Park Ridge"
+    var now: () -> Date = Date.init
 
     func placePlan(for place: LocalPlace, nearbyPlaces: [LocalPlace], events: [TownEvent]) -> TownAIResponse {
         let relatedTags = Set(place.tags)
+        let currentEvents = events.upcomingEvents(relativeTo: now())
         let relatedPlaces = nearbyPlaces
             .filter { $0.id != place.id && !Set($0.tags).intersection(relatedTags).isEmpty }
             .prefix(2)
-        let relatedEvents = events
+        let relatedEvents = currentEvents
             .filter { event in
                 event.category == place.category ||
                 (place.tags.contains("kids") && [.kids, .recreation].contains(event.category)) ||
@@ -53,6 +55,7 @@ struct TownAIService {
         weather: TownWeatherSnapshot? = nil
     ) -> TownAIResponse {
         let query = question.lowercased()
+        let currentEvents = events.upcomingEvents(relativeTo: now())
 
         if query.contains("smart town plan") {
             return smartPlanAnswer(question: question, weather: weather)
@@ -68,11 +71,11 @@ struct TownAIService {
         }
 
         if isWeatherQuestion(query) {
-            return weatherAnswer(weather: weather, places: places, events: events)
+            return weatherAnswer(weather: weather, places: places, events: currentEvents)
         }
 
         if query.contains("parent") || query.contains("kid") || query.contains("play") || query.contains("toddler") || query.contains("family") {
-            return kidPlan(places: places, events: events, weather: weather)
+            return kidPlan(places: places, events: currentEvents, weather: weather)
         }
 
         if query.contains("eat") || query.contains("food") || query.contains("dinner") || query.contains("lunch") || query.contains("date") {
@@ -88,10 +91,10 @@ struct TownAIService {
         }
 
         if query.contains("today") || query.contains("week") || query.contains("event") || query.contains("meeting") || query.contains("happening") {
-            return townPulse(events: events, alerts: alerts, notices: notices, weather: weather)
+            return townPulse(events: currentEvents, alerts: alerts, notices: notices, weather: weather)
         }
 
-        return searchAnswer(query: query, places: places, services: services, events: events, alerts: alerts, notices: notices, weather: weather)
+        return searchAnswer(query: query, places: places, services: services, events: currentEvents, alerts: alerts, notices: notices, weather: weather)
     }
 
     private func workflowFromPrompt(question: String, workflows: [CivicWorkflow]) -> CivicWorkflow? {
@@ -203,9 +206,12 @@ struct TownAIService {
         let weatherText = weather.map { "\n\nWeather read: \($0.summaryLine) \($0.outdoorAdvice)" } ?? ""
         let weatherSources = weather.map { [$0.source.title] } ?? []
         let sources = Array(Set(matches.map(\.source.title) + upcoming.map(\.source.title) + weatherSources))
+        let closing = eventText.isEmpty
+            ? "My pick: start with the Library if you want low-friction indoor time, and Memorial Park for active play when the weather cooperates."
+            : "My pick: start with the Library if you want low-friction indoor time, Memorial Park for active play, and the next dated recreation hook when you want the full town vibe."
 
         return TownAIResponse(
-            text: "Best family plan:\n\(placeText)\n\(weatherText)\n\nUpcoming kid/family hooks:\n\(eventText)\n\nMy pick: start with the Library if you want low-friction indoor time, Memorial Park for active play, and the Town Picnic or summer concerts when you want the full town vibe.",
+            text: "Best family plan:\n\(placeText)\n\(weatherText)\n\nUpcoming kid/family hooks:\n\(eventText.isEmpty ? "No dated kid/family events are current in the local feed." : eventText)\n\n\(closing)",
             sourceTitles: sources
         )
     }
@@ -242,7 +248,7 @@ struct TownAIService {
 
     private func townPulse(events: [TownEvent], alerts: [TownAlert], notices: [TownNotice], weather: TownWeatherSnapshot?) -> TownAIResponse {
         let alertText = alerts.prefix(2).map { "- \($0.title): \($0.summary)" }.joined(separator: "\n")
-        let eventText = events.sorted { $0.priority > $1.priority }.prefix(5).map { "- \($0.title), \($0.dateText) \(($0.timeText.isEmpty ? "" : "at \($0.timeText)"))" }.joined(separator: "\n")
+        let eventText = events.prefix(5).map { "- \($0.title), \($0.dateText) \(($0.timeText.isEmpty ? "" : "at \($0.timeText)"))" }.joined(separator: "\n")
         let noticeText = notices.prefix(3).map { "- \($0.title)" }.joined(separator: "\n")
         let weatherText = weather.map { "\n\nWeather:\n- \($0.summaryLine) \($0.outdoorAdvice)" } ?? ""
         let weatherSources = weather.map { [$0.source.title] } ?? []

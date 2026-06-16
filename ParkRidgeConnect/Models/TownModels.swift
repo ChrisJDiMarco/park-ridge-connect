@@ -96,6 +96,189 @@ struct TownEvent: Identifiable, Hashable, Codable {
     let priority: Int
 }
 
+extension TownEvent {
+    func dateRange(calendar: Calendar = .current) -> ClosedRange<Date>? {
+        TownEventDateParser.dateRange(from: dateText, timeText: timeText, calendar: calendar)
+    }
+
+    func isUpcoming(relativeTo referenceDate: Date = Date(), calendar: Calendar = .current) -> Bool {
+        guard let range = dateRange(calendar: calendar) else { return false }
+        let today = calendar.startOfDay(for: referenceDate)
+        return calendar.startOfDay(for: range.upperBound) >= today
+    }
+}
+
+extension Sequence where Element == TownEvent {
+    func upcomingEvents(relativeTo referenceDate: Date = Date(), calendar: Calendar = .current) -> [TownEvent] {
+        let today = calendar.startOfDay(for: referenceDate)
+        return compactMap { event -> (event: TownEvent, range: ClosedRange<Date>)? in
+            guard let range = event.dateRange(calendar: calendar),
+                  calendar.startOfDay(for: range.upperBound) >= today else {
+                return nil
+            }
+            return (event, range)
+        }
+        .sorted { lhs, rhs in
+            let leftStart = calendar.startOfDay(for: lhs.range.lowerBound)
+            let rightStart = calendar.startOfDay(for: rhs.range.lowerBound)
+            if leftStart != rightStart {
+                return leftStart < rightStart
+            }
+            if lhs.event.priority != rhs.event.priority {
+                return lhs.event.priority > rhs.event.priority
+            }
+            return lhs.event.title < rhs.event.title
+        }
+        .map(\.event)
+    }
+}
+
+private enum TownEventDateParser {
+    private static let monthNumbers: [String: Int] = [
+        "jan": 1, "january": 1,
+        "feb": 2, "february": 2,
+        "mar": 3, "march": 3,
+        "apr": 4, "april": 4,
+        "may": 5,
+        "jun": 6, "june": 6,
+        "jul": 7, "july": 7,
+        "aug": 8, "august": 8,
+        "sep": 9, "sept": 9, "september": 9,
+        "oct": 10, "october": 10,
+        "nov": 11, "november": 11,
+        "dec": 12, "december": 12
+    ]
+
+    static func dateRange(from dateText: String, timeText: String, calendar: Calendar) -> ClosedRange<Date>? {
+        let combined = "\(dateText) \(timeText)"
+        if let range = monthNameRange(in: dateText, calendar: calendar) {
+            return range
+        }
+        if let date = numericDate(in: combined, calendar: calendar) {
+            return date...date
+        }
+        if let date = monthNameDate(in: dateText, calendar: calendar) {
+            return date...date
+        }
+        return nil
+    }
+
+    private static func numericDate(in text: String, calendar: Calendar) -> Date? {
+        if let date = firstMatch(
+            in: text,
+            pattern: #"(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)"#,
+            calendar: calendar,
+            parser: { groups, calendar in
+                guard groups.count == 3,
+                      let year = Int(groups[0]),
+                      let month = Int(groups[1]),
+                      let day = Int(groups[2]) else {
+                    return nil
+                }
+                return makeDate(year: year, month: month, day: day, calendar: calendar)
+            }
+        ) {
+            return date
+        }
+
+        return firstMatch(
+            in: text,
+            pattern: #"(?<!\d)(\d{1,2})[\/.](\d{1,2})[\/.](\d{2}|\d{4})(?!\d)"#,
+            calendar: calendar,
+            parser: { groups, calendar in
+                guard groups.count == 3,
+                      let month = Int(groups[0]),
+                      let day = Int(groups[1]),
+                      var year = Int(groups[2]) else {
+                    return nil
+                }
+                if year < 100 {
+                    year += 2000
+                }
+                return makeDate(year: year, month: month, day: day, calendar: calendar)
+            }
+        )
+    }
+
+    private static func monthNameRange(in text: String, calendar: Calendar) -> ClosedRange<Date>? {
+        let pattern = #"(?i)\b([A-Za-z]{3,9})\s+(\d{1,2})\s*(?:-|–|—|to)\s*([A-Za-z]{3,9})?\s*(\d{1,2}),?\s*(\d{4})\b"#
+        guard let groups = firstGroups(in: text, pattern: pattern),
+              groups.count == 5,
+              let startMonth = monthNumber(for: groups[0]),
+              let startDay = Int(groups[1]),
+              let endDay = Int(groups[3]),
+              let year = Int(groups[4]) else {
+            return nil
+        }
+
+        let endMonth = monthNumber(for: groups[2]) ?? startMonth
+        guard let start = makeDate(year: year, month: startMonth, day: startDay, calendar: calendar),
+              let end = makeDate(year: year, month: endMonth, day: endDay, calendar: calendar),
+              start <= end else {
+            return nil
+        }
+
+        return start...end
+    }
+
+    private static func monthNameDate(in text: String, calendar: Calendar) -> Date? {
+        firstMatch(
+            in: text,
+            pattern: #"(?i)\b([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(\d{4})\b"#,
+            calendar: calendar,
+            parser: { groups, calendar in
+                guard groups.count == 3,
+                      let month = monthNumber(for: groups[0]),
+                      let day = Int(groups[1]),
+                      let year = Int(groups[2]) else {
+                    return nil
+                }
+                return makeDate(year: year, month: month, day: day, calendar: calendar)
+            }
+        )
+    }
+
+    private static func firstMatch(
+        in text: String,
+        pattern: String,
+        calendar: Calendar,
+        parser: ([String], Calendar) -> Date?
+    ) -> Date? {
+        guard let groups = firstGroups(in: text, pattern: pattern) else { return nil }
+        return parser(groups, calendar)
+    }
+
+    private static func firstGroups(in text: String, pattern: String) -> [String]? {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let range = NSRange(text.startIndex..., in: text)
+        guard let match = regex.firstMatch(in: text, range: range) else { return nil }
+
+        return (1..<match.numberOfRanges).map { index in
+            guard match.range(at: index).location != NSNotFound,
+                  let range = Range(match.range(at: index), in: text) else {
+                return ""
+            }
+            return String(text[range])
+        }
+    }
+
+    private static func monthNumber(for text: String) -> Int? {
+        monthNumbers[text.lowercased()]
+    }
+
+    private static func makeDate(year: Int, month: Int, day: Int, calendar: Calendar) -> Date? {
+        guard (1...12).contains(month), (1...31).contains(day) else { return nil }
+        guard let date = calendar.date(from: DateComponents(year: year, month: month, day: day)) else {
+            return nil
+        }
+        let components = calendar.dateComponents([.year, .month, .day], from: date)
+        guard components.year == year, components.month == month, components.day == day else {
+            return nil
+        }
+        return date
+    }
+}
+
 struct LocalPlace: Identifiable, Hashable, Codable {
     let id: String
     let name: String

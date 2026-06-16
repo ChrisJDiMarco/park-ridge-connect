@@ -43,6 +43,7 @@ final class TownStore {
     private let placeDirectoryService: any PlaceDirectoryFetching
     private let aiService: TownAIService
     private let weatherService: any WeatherFetching
+    private let now: () -> Date
 
     // Lookup + search caches keep filtering/sorting off the per-frame hot path.
     // Place caches are rebuilt after live directory merges.
@@ -58,7 +59,8 @@ final class TownStore {
         defaults: UserDefaults = .standard,
         refreshService: (any BoroughRefreshing)? = nil,
         weatherService: (any WeatherFetching)? = nil,
-        placeDirectoryService: (any PlaceDirectoryFetching)? = nil
+        placeDirectoryService: (any PlaceDirectoryFetching)? = nil,
+        now: @escaping () -> Date = Date.init
     ) {
         self.config = pack.config
         self.alerts = pack.alerts
@@ -75,13 +77,14 @@ final class TownStore {
             )
         ]
         self.defaults = defaults
+        self.now = now
         self.weatherService = weatherService ?? ParkRidgeWeatherService(config: pack.config.weather)
         self.refreshService = refreshService ?? BoroughRefreshService(config: pack.config.refresh)
         self.placeDirectoryService = placeDirectoryService ?? PlaceDirectoryRefreshService(
             config: pack.config.placeDirectory ?? .parkRidgeDefault,
             defaults: defaults
         )
-        self.aiService = TownAIService(townName: pack.config.townName)
+        self.aiService = TownAIService(townName: pack.config.townName, now: now)
         self.favoritePlaceIDs = Set(defaults.stringArray(forKey: Self.favoritePlaceIDsKey) ?? [])
         let lensRawValue = defaults.string(forKey: Self.selectedLensKey) ?? ResidentLens.today.rawValue
         self.selectedLens = ResidentLens(rawValue: lensRawValue) ?? .today
@@ -99,7 +102,11 @@ final class TownStore {
     }
 
     var featuredEvents: [TownEvent] {
-        events.sorted { $0.priority > $1.priority }.prefix(6).map { $0 }
+        upcomingEvents.prefix(6).map { $0 }
+    }
+
+    var upcomingEvents: [TownEvent] {
+        events.upcomingEvents(relativeTo: now())
     }
 
     var topPlaces: [LocalPlace] {
@@ -293,7 +300,7 @@ final class TownStore {
             question: trimmed,
             places: places,
             services: services,
-            events: events,
+            events: upcomingEvents,
             alerts: alerts,
             notices: notices,
             workflows: civicWorkflows,
@@ -309,7 +316,7 @@ final class TownStore {
             question: text,
             places: places,
             services: services,
-            events: events,
+            events: upcomingEvents,
             alerts: alerts,
             notices: notices,
             workflows: civicWorkflows,
@@ -318,7 +325,7 @@ final class TownStore {
     }
 
     func placePlan(for place: LocalPlace) -> TownAIResponse {
-        aiService.placePlan(for: place, nearbyPlaces: places, events: events)
+        aiService.placePlan(for: place, nearbyPlaces: places, events: upcomingEvents)
     }
 
     func place(withID id: String) -> LocalPlace? {
