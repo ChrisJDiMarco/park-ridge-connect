@@ -10,6 +10,8 @@ SUPPORT_URL="${SUPPORT_URL:-https://chrisjdimarco.github.io/park-ridge-connect-c
 SCREENSHOT_DIR="${SCREENSHOT_DIR:-/Users/chrisdimarco/Documents/Codex/2026-06-16/i-know-i-made-a-visual/outputs/app-store-screenshots}"
 DERIVED_DATA="${DERIVED_DATA:-DerivedData}"
 ARCHIVE_PATH="${ARCHIVE_PATH:-$DERIVED_DATA/Archive/ParkRidgeConnect.xcarchive}"
+EXPORT_PATH="${EXPORT_PATH:-$DERIVED_DATA/AppStoreExport}"
+EXPORT_OPTIONS_PLIST="${EXPORT_OPTIONS_PLIST:-Tools/app-store/ExportOptions-AppStoreConnect.plist}"
 SIMULATOR_DESTINATION="${SIMULATOR_DESTINATION:-platform=iOS Simulator,name=iPhone 17}"
 MINIMUM_PLACE_COUNT="${MINIMUM_PLACE_COUNT:-50}"
 
@@ -56,6 +58,27 @@ check_local_catalog() {
   else
     fail "Checked-in catalog is missing required place count or categories"
   fi
+}
+
+check_export_options() {
+  log "Checking App Store export options"
+  if [[ ! -f "$EXPORT_OPTIONS_PLIST" ]]; then
+    fail "Missing export options plist: $EXPORT_OPTIONS_PLIST"
+    return
+  fi
+
+  plutil -lint "$EXPORT_OPTIONS_PLIST" >/dev/null || fail "Export options plist is invalid"
+
+  local method signing_style signing_certificate team_id
+  method="$(/usr/libexec/PlistBuddy -c 'Print :method' "$EXPORT_OPTIONS_PLIST" 2>/dev/null || true)"
+  signing_style="$(/usr/libexec/PlistBuddy -c 'Print :signingStyle' "$EXPORT_OPTIONS_PLIST" 2>/dev/null || true)"
+  signing_certificate="$(/usr/libexec/PlistBuddy -c 'Print :signingCertificate' "$EXPORT_OPTIONS_PLIST" 2>/dev/null || true)"
+  team_id="$(/usr/libexec/PlistBuddy -c 'Print :teamID' "$EXPORT_OPTIONS_PLIST" 2>/dev/null || true)"
+
+  [[ "$method" == "app-store-connect" ]] && pass "Export method is app-store-connect" || fail "Unexpected export method: $method"
+  [[ "$signing_style" == "automatic" ]] && pass "Export signing style is automatic" || fail "Unexpected export signing style: $signing_style"
+  [[ "$signing_certificate" == "Apple Distribution" ]] && pass "Export uses Apple Distribution" || fail "Unexpected export signing certificate: $signing_certificate"
+  [[ "$team_id" == "4X5MZ8MGH9" ]] && pass "Export team ID is $team_id" || fail "Unexpected export team ID: $team_id"
 }
 
 check_live_urls() {
@@ -144,9 +167,11 @@ run_archive() {
   fi
 
   log "Building iOS archive"
+  rm -rf "$ARCHIVE_PATH"
   if xcodebuild archive \
     -project ParkRidgeConnect.xcodeproj \
     -scheme ParkRidgeConnect \
+    -configuration Release \
     -destination 'generic/platform=iOS' \
     -archivePath "$ARCHIVE_PATH" \
     -derivedDataPath "$DERIVED_DATA"; then
@@ -171,13 +196,55 @@ run_archive() {
   [[ "$build" == "1" ]] && pass "Build number is $build" || fail "Unexpected build number: $build"
   [[ "$minimum_os" == "17.0" ]] && pass "Minimum iOS is $minimum_os" || fail "Unexpected minimum iOS: $minimum_os"
   [[ "$catalog_url" == "$CATALOG_URL" ]] && pass "Archive points at production catalog URL" || fail "Archive catalog URL mismatch: $catalog_url"
+}
 
-  local signature
-  signature="$(codesign -dvv "$app_path" 2>&1 || true)"
-  if grep -q 'Authority=Apple Distribution:' <<<"$signature"; then
-    pass "Archive is signed with Apple Distribution"
+run_export() {
+  if [[ "${SKIP_XCODE_ARCHIVE:-0}" == "1" || "${SKIP_XCODE_EXPORT:-0}" == "1" ]]; then
+    log "Skipping App Store export"
+    return
+  fi
+
+  log "Exporting App Store Connect IPA"
+  if [[ ! -d "$ARCHIVE_PATH" ]]; then
+    fail "Archive not found for export: $ARCHIVE_PATH"
+    return
+  fi
+
+  local provisioning_args=()
+  if [[ "${ALLOW_PROVISIONING_UPDATES:-0}" == "1" ]]; then
+    provisioning_args=(-allowProvisioningUpdates)
+  fi
+
+  rm -rf "$EXPORT_PATH"
+  if xcodebuild -exportArchive \
+    -archivePath "$ARCHIVE_PATH" \
+    -exportPath "$EXPORT_PATH" \
+    -exportOptionsPlist "$EXPORT_OPTIONS_PLIST" \
+    ${provisioning_args[@]+"${provisioning_args[@]}"}; then
+    pass "App Store export succeeded"
   else
-    fail "Archive is not signed with Apple Distribution"
+    fail "App Store export failed"
+    return
+  fi
+
+  local ipa
+  ipa="$(find "$EXPORT_PATH" -maxdepth 1 -name '*.ipa' -print -quit)"
+  if [[ -z "$ipa" ]]; then
+    fail "App Store export did not produce an IPA"
+    return
+  fi
+  pass "App Store export produced an IPA"
+
+  local inspection_dir signature
+  inspection_dir="$(mktemp -d)"
+  unzip -q "$ipa" -d "$inspection_dir"
+  signature="$(codesign -dvv "$inspection_dir/Payload/ParkRidgeConnect.app" 2>&1 || true)"
+  rm -rf "$inspection_dir"
+
+  if grep -q 'Authority=Apple Distribution:' <<<"$signature"; then
+    pass "Exported IPA is signed with Apple Distribution"
+  else
+    fail "Exported IPA is not signed with Apple Distribution"
     printf '%s\n' "$signature" | grep 'Authority=' || true
   fi
 }
@@ -198,15 +265,19 @@ require_command curl
 require_command jq
 require_command python3
 require_command sips
+require_command plutil
+require_command unzip
 require_command xcodebuild
 require_command security
 require_command codesign
 
 check_local_catalog
+check_export_options
 check_live_urls
 check_screenshots
 run_tests
 run_archive
+run_export
 check_signing_identity
 
 if (( failures > 0 )); then
