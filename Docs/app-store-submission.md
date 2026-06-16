@@ -38,7 +38,8 @@ HTTP 200 and 54 places. It is hosted from the public
 remain private while App Review can load the JSON without authentication.
 The submission readiness gate requires the checked-in and live catalogs to have
 a fresh `generatedAt` timestamp, OpenStreetMap/Overpass provenance, curated
-supplemental source metadata, and source metadata on every place.
+supplemental source metadata, source metadata on every place, and no refresh
+warnings.
 
 Archive command once the final public URL is live:
 

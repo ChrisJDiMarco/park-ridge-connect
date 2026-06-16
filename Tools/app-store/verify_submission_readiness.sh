@@ -104,11 +104,11 @@ check_catalog_provenance() {
     (.source.url == "https://www.openstreetmap.org/copyright") and
     (.retrievedFrom | type == "array" and length > 0 and all(.[]; type == "string" and test("https://"))) and
     (.supplementalPlaces.source == "curated Park Ridge seed catalog") and
-    (.warnings | type == "array")
+    (.warnings | type == "array" and length == 0)
   ' "$catalog" >/dev/null; then
-    pass "$label includes generatedAt, OSM/Overpass provenance, and supplemental source metadata"
+    pass "$label includes generatedAt, OSM/Overpass provenance, supplemental source metadata, and no warnings"
   else
-    fail "$label is missing generatedAt, OSM/Overpass provenance, or supplemental source metadata"
+    fail "$label is missing generatedAt, OSM/Overpass provenance, supplemental source metadata, or has warnings"
   fi
 }
 
