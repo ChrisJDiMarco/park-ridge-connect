@@ -199,6 +199,12 @@ xcrun simctl launch booted com.chrisdimarco.ParkRidgeConnect --args -screenshotT
 
 Valid tab values: `today`, `explore`, `ask`, `services`.
 
+Regenerate the full local screenshot set from the current build with:
+
+```sh
+Tools/app-store/capture_app_store_screenshots.sh
+```
+
 Current local capture set:
 
 ```text

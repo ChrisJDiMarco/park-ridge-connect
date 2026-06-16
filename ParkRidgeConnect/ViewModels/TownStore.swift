@@ -271,7 +271,7 @@ final class TownStore {
                 rebuildPlaceCaches()
             }
             lastDirectoryRefresh = result.fetchedAt
-            directoryStatus = result.usedCachedData ? "Using cached place directory" : "Live place directory updated"
+            directoryStatus = result.usedCachedData ? "Place directory ready" : "Live place directory updated"
         } catch {
             directoryStatus = "Using seeded places; directory refresh unavailable"
         }

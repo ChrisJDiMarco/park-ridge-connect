@@ -658,6 +658,27 @@ final class TownAIServiceTests: XCTestCase {
     }
 
     @MainActor
+    func testCachedPlaceDirectoryStatusIsResidentFriendly() async {
+        let suiteName = "ParkRidgeConnectTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        let store = TownStore(
+            defaults: defaults,
+            placeDirectoryService: StubPlaceDirectoryService(result: PlaceDirectoryRefreshResult(
+                places: [],
+                fetchedAt: juneThird2026,
+                usedCachedData: true
+            ))
+        )
+
+        await store.refreshPlaceDirectory()
+
+        XCTAssertEqual(store.directoryStatus, "Place directory ready")
+        XCTAssertFalse(store.homeStatusText.localizedCaseInsensitiveContains("cached"))
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+
+    @MainActor
     func testManualRefreshForcesPlaceDirectoryRefresh() async {
         let suiteName = "ParkRidgeConnectTests-\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
