@@ -83,6 +83,15 @@ Upload one to ten iPhone screenshots. Recommended first set:
 
 Apple screenshot specs currently require PNG/JPG/JPEG and one to ten screenshots per device display size.
 
+Captured 6.9-inch iPhone screenshots on 2026-06-16:
+
+- `park-ridge-connect-today-iphone-17-pro-max.png`
+- `park-ridge-connect-explore-iphone-17-pro-max.png`
+- `park-ridge-connect-ask-iphone-17-pro-max.png`
+- `park-ridge-connect-services-iphone-17-pro-max.png`
+
+Each file is 1320 x 2868 pixels.
+
 ## Official References
 
 - App information fields: https://developer.apple.com/help/app-store-connect/reference/app-information/app-information/

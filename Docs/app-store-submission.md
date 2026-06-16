@@ -70,6 +70,8 @@ Checked on 2026-06-16:
 - iOS archive succeeded for bundle `com.chrisdimarco.ParkRidgeConnect`, version
   `1.0`, build `1`, minimum iOS `17.0`, and includes the production
   `TOWN_PLACE_CATALOG_URL` in its generated Info.plist.
+- iPhone 17 Pro Max screenshots were captured at 1320 x 2868 pixels for Today,
+  Explore, Ask, and Services.
 
 The current archive is not ready to upload because it signed with
 `Apple Development: Chris DiMarco (R5FQ2HG7F5)` and no Apple Distribution
@@ -121,6 +123,24 @@ Capture at least the highest-resolution iPhone screenshots for:
 - Ask assistant
 - Services/Civic workflows
 
+The app supports a screenshot-only launch argument for selecting the initial
+tab:
+
+```sh
+xcrun simctl launch booted com.chrisdimarco.ParkRidgeConnect --args -screenshotTab explore
+```
+
+Valid tab values: `today`, `explore`, `ask`, `services`.
+
+Current local capture set:
+
+```text
+outputs/app-store-screenshots/park-ridge-connect-today-iphone-17-pro-max.png
+outputs/app-store-screenshots/park-ridge-connect-explore-iphone-17-pro-max.png
+outputs/app-store-screenshots/park-ridge-connect-ask-iphone-17-pro-max.png
+outputs/app-store-screenshots/park-ridge-connect-services-iphone-17-pro-max.png
+```
+
 Official screenshot upload guidance:
 https://developer.apple.com/help/app-store-connect/manage-app-information/upload-app-previews-and-screenshots/
 
@@ -131,6 +151,7 @@ https://developer.apple.com/help/app-store-connect/manage-app-information/upload
 - [x] Public privacy policy URL exists.
 - [x] Public support URL exists.
 - [x] App Store metadata draft is prepared in `Docs/app-store-metadata.md`.
+- [x] 6.9-inch iPhone screenshot assets are captured locally.
 - [ ] App Store distribution signing/export succeeds, not just local development signing.
 - [ ] App Privacy answers are published and match the exact build configuration.
 - [ ] Privacy policy and support URLs are entered in App Store Connect.

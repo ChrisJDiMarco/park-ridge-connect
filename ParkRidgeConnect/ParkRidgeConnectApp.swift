@@ -30,7 +30,7 @@ enum AppTab: Hashable {
 }
 
 struct RootView: View {
-    @State private var selectedTab: AppTab = .today
+    @State private var selectedTab: AppTab = .initialLaunchTab
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -46,6 +46,32 @@ struct RootView: View {
             ServicesView(selectedTab: $selectedTab)
                 .tabItem { Label("Services", systemImage: "building.columns") }
                 .tag(AppTab.services)
+        }
+    }
+}
+
+private extension AppTab {
+    static var initialLaunchTab: AppTab {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let tabFlagIndex = arguments.firstIndex(of: "-screenshotTab"),
+              arguments.indices.contains(tabFlagIndex + 1) else {
+            return .today
+        }
+        return AppTab(argument: arguments[tabFlagIndex + 1]) ?? .today
+    }
+
+    init?(argument: String) {
+        switch argument.lowercased() {
+        case "today":
+            self = .today
+        case "explore":
+            self = .explore
+        case "ask":
+            self = .ask
+        case "services":
+            self = .services
+        default:
+            return nil
         }
     }
 }
