@@ -12,6 +12,7 @@ DERIVED_DATA="${DERIVED_DATA:-DerivedData}"
 ARCHIVE_PATH="${ARCHIVE_PATH:-$DERIVED_DATA/Archive/ParkRidgeConnect.xcarchive}"
 EXPORT_PATH="${EXPORT_PATH:-$DERIVED_DATA/AppStoreExport}"
 EXPORT_OPTIONS_PLIST="${EXPORT_OPTIONS_PLIST:-Tools/app-store/ExportOptions-AppStoreConnect.plist}"
+UPLOAD_OPTIONS_PLIST="${UPLOAD_OPTIONS_PLIST:-Tools/app-store/UploadOptions-AppStoreConnect.plist}"
 SIMULATOR_DESTINATION="${SIMULATOR_DESTINATION:-platform=iOS Simulator,name=iPhone 17}"
 MINIMUM_PLACE_COUNT="${MINIMUM_PLACE_COUNT:-50}"
 
@@ -80,6 +81,61 @@ check_export_options() {
   [[ "$signing_style" == "automatic" ]] && pass "Export signing style is automatic" || fail "Unexpected export signing style: $signing_style"
   [[ "$signing_certificate" == "Apple Distribution" ]] && pass "Export uses Apple Distribution" || fail "Unexpected export signing certificate: $signing_certificate"
   [[ "$team_id" == "4X5MZ8MGH9" ]] && pass "Export team ID is $team_id" || fail "Unexpected export team ID: $team_id"
+}
+
+check_upload_options() {
+  log "Checking App Store upload options"
+  if [[ ! -f "$UPLOAD_OPTIONS_PLIST" ]]; then
+    fail "Missing upload options plist: $UPLOAD_OPTIONS_PLIST"
+    return
+  fi
+
+  plutil -lint "$UPLOAD_OPTIONS_PLIST" >/dev/null || fail "Upload options plist is invalid"
+
+  local destination method signing_style signing_certificate team_id
+  destination="$(/usr/libexec/PlistBuddy -c 'Print :destination' "$UPLOAD_OPTIONS_PLIST" 2>/dev/null || true)"
+  method="$(/usr/libexec/PlistBuddy -c 'Print :method' "$UPLOAD_OPTIONS_PLIST" 2>/dev/null || true)"
+  signing_style="$(/usr/libexec/PlistBuddy -c 'Print :signingStyle' "$UPLOAD_OPTIONS_PLIST" 2>/dev/null || true)"
+  signing_certificate="$(/usr/libexec/PlistBuddy -c 'Print :signingCertificate' "$UPLOAD_OPTIONS_PLIST" 2>/dev/null || true)"
+  team_id="$(/usr/libexec/PlistBuddy -c 'Print :teamID' "$UPLOAD_OPTIONS_PLIST" 2>/dev/null || true)"
+
+  [[ "$destination" == "upload" ]] && pass "Upload destination is upload" || fail "Unexpected upload destination: $destination"
+  [[ "$method" == "app-store-connect" ]] && pass "Upload method is app-store-connect" || fail "Unexpected upload method: $method"
+  [[ "$signing_style" == "automatic" ]] && pass "Upload signing style is automatic" || fail "Unexpected upload signing style: $signing_style"
+  [[ "$signing_certificate" == "Apple Distribution" ]] && pass "Upload uses Apple Distribution" || fail "Unexpected upload signing certificate: $signing_certificate"
+  [[ "$team_id" == "4X5MZ8MGH9" ]] && pass "Upload team ID is $team_id" || fail "Unexpected upload team ID: $team_id"
+}
+
+check_metadata_draft() {
+  log "Checking App Store metadata draft"
+  local metadata="Docs/app-store-metadata.md"
+  if [[ ! -f "$metadata" ]]; then
+    fail "Missing metadata draft: $metadata"
+    return
+  fi
+
+  local required_patterns=(
+    "Name: Park Ridge Connect"
+    "SKU: park-ridge-connect-ios"
+    "Bundle ID: com.chrisdimarco.ParkRidgeConnect"
+    "Primary category: Lifestyle"
+    "Price: Free"
+    "Version: 1.0"
+    "Privacy Policy URL: $PRIVACY_URL"
+    "Support URL: $SUPPORT_URL"
+    "Tracking: No"
+    "Data collected: No"
+    "Park Ridge Connect is a free resident guide"
+  )
+
+  local pattern
+  for pattern in "${required_patterns[@]}"; do
+    if grep -Fq "$pattern" "$metadata"; then
+      pass "Metadata includes: $pattern"
+    else
+      fail "Metadata missing: $pattern"
+    fi
+  done
 }
 
 check_live_urls() {
@@ -277,6 +333,8 @@ require_command codesign
 
 check_local_catalog
 check_export_options
+check_upload_options
+check_metadata_draft
 check_live_urls
 check_screenshots
 run_tests

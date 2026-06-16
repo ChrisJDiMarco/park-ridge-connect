@@ -117,6 +117,13 @@ download managed signing assets, opt in to portal access:
 ALLOW_PROVISIONING_UPDATES=1 Tools/app-store/export_app_store_ipa.sh
 ```
 
+Prepare a local package with the metadata draft, screenshots, runbook, and
+exported IPA:
+
+```sh
+Tools/app-store/prepare_submission_package.sh
+```
+
 After the App Store Connect app record exists, upload the build with:
 
 ```sh
