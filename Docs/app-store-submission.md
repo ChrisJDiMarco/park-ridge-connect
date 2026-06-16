@@ -123,6 +123,20 @@ After the App Store Connect app record exists, upload the build with:
 ALLOW_PROVISIONING_UPDATES=1 Tools/app-store/upload_app_store_build.sh
 ```
 
+If you have an App Store Connect API key, verify that the app record exists
+before uploading:
+
+```sh
+Tools/app-store/check_app_store_connect_record.py \
+  --key-id YOUR_KEY_ID \
+  --issuer-id YOUR_ISSUER_ID \
+  --private-key-path /path/to/AuthKey_YOUR_KEY_ID.p8
+```
+
+The current Apple OpenAPI spec exposes `GET /v1/apps` with `filter[bundleId]`
+for lookup, but no `POST /v1/apps` create operation. Create the initial app
+record in App Store Connect, then use this checker and the upload command.
+
 ## App Privacy Answers
 
 Recommended answer for the current no-key build:
