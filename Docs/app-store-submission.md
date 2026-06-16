@@ -78,6 +78,17 @@ The current archive is not ready to upload because it signed with
 `Apple Development: Chris DiMarco (R5FQ2HG7F5)` and no Apple Distribution
 identity is installed locally.
 
+Run the local gate before submission:
+
+```sh
+Tools/app-store/verify_submission_readiness.sh
+```
+
+The script checks local catalog JSON, the live catalog/privacy/support URLs,
+App Store screenshots, simulator tests, archive Info.plist values, and archive
+signing. It is expected to fail until an Apple Distribution identity is
+installed and the archive signs for distribution.
+
 ## App Privacy Answers
 
 Recommended answer for the current no-key build:
