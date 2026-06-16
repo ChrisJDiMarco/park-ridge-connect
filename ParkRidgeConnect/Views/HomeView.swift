@@ -7,23 +7,21 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 14) {
-                    AppHeader(subtitle: store.refreshStatus)
-                    refreshStrip
+                LazyVStack(spacing: PRTheme.sectionSpacing) {
+                    AppHeader(title: store.config.appTitle, subtitle: store.homeStatusText)
                     weatherCard
-                    smartPlanCard
-                    residentLensSection
+                    townPlanSection
+                    quickActions
                     alertSection
                     eventSection
-                    quickActions
                     savedPlaces
                     topPlaces
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 16)
+                .padding(.top, 12)
                 .padding(.bottom, 96)
             }
-            .background(PRTheme.canvas.ignoresSafeArea())
+            .background { TownBackdrop() }
             .navigationTitle("Today")
             .navigationBarTitleDisplayMode(.inline)
             .task {
@@ -37,66 +35,45 @@ struct HomeView: View {
         }
     }
 
-    private var refreshStrip: some View {
-        HStack {
-            Label(store.lastRefresh.map { "Updated \($0.formatted(date: .omitted, time: .shortened))" } ?? "Official links + seeded local cache", systemImage: store.isRefreshing ? "arrow.triangle.2.circlepath" : "checkmark.circle.fill")
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(PRTheme.teal)
-            Spacer()
-            Button {
-                Task { await store.refresh() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .accessibilityLabel("Refresh borough data")
-        }
-        .residentCard()
-    }
-
     private var weatherCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Right Now Outside", systemImage: "cloud.sun.fill")
-                    .font(.headline)
-                Spacer()
+        VStack(alignment: .leading, spacing: 14) {
+            SectionHeader("Right Now Outside", symbol: "cloud.sun.fill", tint: PRTheme.sky) {
                 Button {
                     Task { await store.refreshWeather() }
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .buttonStyle(PRIconButtonStyle(tint: PRTheme.sky, size: 30))
                 .disabled(store.isLoadingWeather)
                 .accessibilityLabel("Refresh weather")
             }
 
             if let weather = store.weatherSnapshot {
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .center, spacing: 14) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(PRTheme.sky.opacity(0.18))
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(PRTheme.skyWash)
                         Image(systemName: weather.systemImage)
-                            .font(.system(size: 34, weight: .bold))
+                            .font(.system(size: 34, weight: .semibold))
                             .foregroundStyle(PRTheme.sky)
                     }
-                    .frame(width: 72, height: 72)
+                    .frame(width: 76, height: 76)
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
                             Text(weather.temperatureText)
-                                .font(.system(size: 36, weight: .black, design: .rounded))
+                                .font(.system(size: 40, weight: .bold, design: .rounded))
                                 .foregroundStyle(PRTheme.ink)
                             Text(weather.shortForecast)
-                                .font(.subheadline.weight(.bold))
+                                .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(PRTheme.sky)
                                 .lineLimit(1)
                         }
 
                         Text(weather.outdoorAdvice)
-                            .font(.caption)
+                            .font(.footnote)
                             .foregroundStyle(PRTheme.muted)
+                            .lineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -112,21 +89,19 @@ struct HomeView: View {
                     selectedTab = .ask
                 } label: {
                     Label("Ask AI what to do with this weather", systemImage: "sparkles")
-                        .font(.caption.weight(.bold))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.bordered)
-                .tint(PRTheme.teal)
+                .buttonStyle(PRSoftButtonStyle())
             } else {
                 HStack(spacing: 12) {
                     ProgressView()
                         .opacity(store.isLoadingWeather ? 1 : 0)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(store.weatherStatus)
-                            .font(.subheadline.weight(.bold))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(PRTheme.ink)
                         Text("Pull to refresh or tap the weather refresh button for the National Weather Service forecast.")
-                            .font(.caption)
+                            .font(.footnote)
                             .foregroundStyle(PRTheme.muted)
                     }
                 }
@@ -136,79 +111,17 @@ struct HomeView: View {
         .residentCard()
     }
 
-    private var smartPlanCard: some View {
+    /// One card that merges the old "Smart Town Plan" and "Resident Lens"
+    /// sections: pick a lens, get three weather-aware moves for it.
+    private var townPlanSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Label("Smart Town Plan", systemImage: "wand.and.stars")
-                        .font(.headline)
-                    Text("Three useful moves for the \(store.selectedLens.rawValue) lens.")
-                        .font(.caption)
-                        .foregroundStyle(PRTheme.muted)
-                }
-                Spacer()
-                Button {
-                    store.queueAssistantPrompt(store.assistantPromptForSmartPlan())
-                    selectedTab = .ask
-                } label: {
-                    Image(systemName: "sparkles")
-                        .font(.headline.weight(.bold))
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-                .accessibilityLabel("Ask AI to explain the Smart Town Plan")
+            SectionHeader("Your Town Plan", symbol: "wand.and.stars") {
+                CountBadge(text: store.selectedLens.rawValue)
             }
 
-            VStack(spacing: 8) {
-                ForEach(store.smartPlanItems.prefix(3)) { item in
-                    smartPlanRow(for: item)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .residentCard()
-    }
-
-    @ViewBuilder
-    private func smartPlanRow(for item: TownPlanItem) -> some View {
-        if let placeID = item.placeID, let place = store.place(withID: placeID) {
-            NavigationLink {
-                PlaceDetailView(place: place)
-            } label: {
-                TownPlanRow(item: item, showsExternalArrow: false)
-            }
-            .buttonStyle(.plain)
-        } else if let serviceID = item.serviceID,
-                  let service = store.service(withID: serviceID),
-                  let website = service.website {
-            Link(destination: website) {
-                TownPlanRow(item: item, showsExternalArrow: true)
-            }
-            .buttonStyle(.plain)
-        } else {
-            Button {
-                store.queueAssistantPrompt(store.assistantPromptForSmartPlan())
-                selectedTab = .ask
-            } label: {
-                TownPlanRow(item: item, showsExternalArrow: false)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var residentLensSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Resident Lens", systemImage: "slider.horizontal.3")
-                    .font(.headline)
-                Spacer()
-                Text(store.selectedLens.rawValue)
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(PRTheme.teal)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 5)
-                    .background(PRTheme.teal.opacity(0.10), in: Capsule())
-            }
+            Text("Pick a lens — the plan adapts to it and today's weather.")
+                .font(.footnote)
+                .foregroundStyle(PRTheme.muted)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
@@ -223,77 +136,80 @@ struct HomeView: View {
                         }
                     }
                 }
+                .padding(.vertical, 2)
+            }
+
+            VStack(spacing: 8) {
+                ForEach(store.smartPlanItems.prefix(3)) { item in
+                    smartPlanRow(for: item)
+                }
             }
 
             Button {
-                store.queueAssistantPrompt(store.assistantPromptForSelectedLens())
+                store.queueAssistantPrompt(store.assistantPromptForSmartPlan())
                 selectedTab = .ask
             } label: {
-                Label("Brief me for \(store.selectedLens.rawValue)", systemImage: "sparkles")
-                    .font(.subheadline.weight(.bold))
+                Label("Brief me on this plan", systemImage: "sparkles")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.regular)
-            .tint(PRTheme.teal)
-
-            VStack(spacing: 8) {
-                ForEach(store.residentBriefItems.prefix(3)) { item in
-                    residentBriefRow(for: item)
-                }
-            }
+            .buttonStyle(PRProminentButtonStyle())
+            .accessibilityLabel("Ask AI to brief you on this town plan")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .residentCard()
     }
 
     @ViewBuilder
-    private func residentBriefRow(for item: ResidentBriefItem) -> some View {
+    private func smartPlanRow(for item: TownPlanItem) -> some View {
         if let placeID = item.placeID, let place = store.place(withID: placeID) {
             NavigationLink {
                 PlaceDetailView(place: place)
             } label: {
-                ResidentBriefRow(item: item, showsExternalArrow: false)
+                TownPlanRow(item: item, showsExternalArrow: false)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PRPressableStyle())
         } else if let serviceID = item.serviceID,
                   let service = store.service(withID: serviceID),
                   let website = service.website {
             Link(destination: website) {
-                ResidentBriefRow(item: item, showsExternalArrow: true)
+                TownPlanRow(item: item, showsExternalArrow: true)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PRPressableStyle())
         } else {
             Button {
-                store.queueAssistantPrompt(store.assistantPrompt(for: item))
+                store.queueAssistantPrompt(store.assistantPromptForSmartPlan())
                 selectedTab = .ask
             } label: {
-                ResidentBriefRow(item: item, showsExternalArrow: false)
+                TownPlanRow(item: item, showsExternalArrow: false)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PRPressableStyle())
         }
     }
 
     private var alertSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Borough Alerts")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader("Borough Alerts", symbol: "bell.badge.fill", tint: PRTheme.gold)
+
             ForEach(store.alerts.prefix(3)) { alert in
-                HStack(alignment: .top, spacing: 10) {
+                HStack(alignment: .top, spacing: 12) {
                     Image(systemName: alert.severity == .urgent ? "exclamationmark.triangle.fill" : "info.circle.fill")
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(alert.severity.color)
-                    VStack(alignment: .leading, spacing: 3) {
+                        .padding(.top, 2)
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(alert.title)
-                            .font(.subheadline.weight(.bold))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(PRTheme.ink)
                         Text(alert.summary)
-                            .font(.caption)
+                            .font(.footnote)
                             .foregroundStyle(PRTheme.muted)
+                            .lineSpacing(2)
                         SourceBadge(title: alert.source.title)
                     }
                     Spacer()
                 }
-                .padding(10)
-                .background(alert.severity.color.opacity(0.10), in: RoundedRectangle(cornerRadius: 8))
+                .padding(12)
+                .background(alert.severity.color.opacity(0.08), in: RoundedRectangle(cornerRadius: PRTheme.innerRadius, style: .continuous))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -301,25 +217,27 @@ struct HomeView: View {
     }
 
     private var eventSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Coming Up")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader("Coming Up", symbol: "calendar")
+
             ForEach(store.featuredEvents) { event in
-                HStack(spacing: 10) {
-                    VStack {
+                HStack(spacing: 12) {
+                    VStack(spacing: 1) {
                         Text(event.dateText.components(separatedBy: " ").first ?? event.dateText)
-                            .font(.title3.weight(.bold))
+                            .font(.system(.title3, design: .rounded).weight(.bold))
                         Text(event.dateText.components(separatedBy: " ").dropFirst().joined(separator: " "))
-                            .font(.caption)
+                            .font(.caption.weight(.semibold))
                     }
-                    .frame(width: 58)
+                    .frame(width: 54, height: 54)
                     .foregroundStyle(event.category.color)
+                    .background(event.category.color.opacity(0.10), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(event.title)
-                            .font(.subheadline.weight(.bold))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(PRTheme.ink)
                         Text(event.timeText)
-                            .font(.caption.weight(.medium))
+                            .font(.footnote.weight(.medium))
                             .foregroundStyle(PRTheme.muted)
                         Text(event.audience)
                             .font(.caption)
@@ -327,8 +245,7 @@ struct HomeView: View {
                     }
                     Spacer()
                 }
-                .padding(10)
-                .background(PRTheme.canvas, in: RoundedRectangle(cornerRadius: 8))
+                .innerTile()
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -336,7 +253,7 @@ struct HomeView: View {
     }
 
     private var quickActions: some View {
-        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible())], spacing: 10) {
             quickAction("Ask AI", "sparkles", PRTheme.teal) {
                 selectedTab = .ask
             }
@@ -358,39 +275,49 @@ struct HomeView: View {
 
     private func quickAction(_ title: String, _ symbol: String, _ color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: symbol)
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.14))
+                    Image(systemName: symbol)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(color)
+                }
+                .frame(width: 36, height: 36)
+
                 Text(title)
+                    .font(.system(.headline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(PRTheme.ink)
+
                 Spacer(minLength: 0)
+
                 Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.bold))
-                    .opacity(0.7)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(PRTheme.muted.opacity(0.6))
             }
-            .font(.headline)
-            .foregroundStyle(color)
             .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: 58)
-            .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
-            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .frame(maxWidth: .infinity, minHeight: 64)
+            .background {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(PRTheme.paper)
+                    .shadow(color: Color.black.opacity(0.04), radius: 10, y: 4)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(PRTheme.line, lineWidth: 1)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PRPressableStyle())
         .accessibilityLabel(title)
     }
 
     @ViewBuilder
     private var savedPlaces: some View {
         if !store.favoritePlaces.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Label("Saved Places", systemImage: "bookmark.fill")
-                        .font(.headline)
-                    Spacer()
-                    Text("\(store.favoritePlaces.count)")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(PRTheme.teal)
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 5)
-                        .background(PRTheme.teal.opacity(0.10), in: Capsule())
+            VStack(alignment: .leading, spacing: 12) {
+                SectionHeader("Saved Places", symbol: "bookmark.fill", tint: PRTheme.gold) {
+                    CountBadge(text: "\(store.favoritePlaces.count)", tint: PRTheme.gold)
                 }
 
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -401,18 +328,18 @@ struct HomeView: View {
                             } label: {
                                 SavedPlaceTile(place: place)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(PRPressableStyle())
                         }
                     }
+                    .padding(.vertical, 4)
                 }
             }
         }
     }
 
     private var topPlaces: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Useful Right Now")
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader("Useful Right Now", symbol: "star.fill", tint: PRTheme.gold)
             ForEach(store.topPlaces.prefix(4)) { place in
                 PlaceCard(place: place)
             }
@@ -425,45 +352,43 @@ private struct TownPlanRow: View {
     let showsExternalArrow: Bool
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(item.category.color.opacity(0.14))
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(item.category.color.opacity(0.12))
                 Image(systemName: item.symbol)
-                    .font(.subheadline.weight(.bold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(item.category.color)
             }
             .frame(width: 40, height: 40)
 
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(item.slot)
-                        .font(.caption.weight(.black))
+                        .font(.caption.weight(.bold))
                         .foregroundStyle(item.category.color)
                         .lineLimit(1)
                     Spacer(minLength: 8)
                     Label(item.actionLabel, systemImage: showsExternalArrow ? "arrow.up.right" : "chevron.right")
                         .labelStyle(.iconOnly)
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(PRTheme.muted)
+                        .foregroundStyle(PRTheme.muted.opacity(0.7))
                 }
 
                 Text(item.title)
-                    .font(.subheadline.weight(.bold))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(PRTheme.ink)
                     .lineLimit(2)
 
                 Text(item.summary)
-                    .font(.caption)
+                    .font(.footnote)
                     .foregroundStyle(PRTheme.muted)
                     .lineLimit(2)
 
                 SourceBadge(title: item.source.title)
             }
         }
-        .padding(10)
-        .background(PRTheme.canvas, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .innerTile()
     }
 }
 
@@ -473,9 +398,9 @@ private struct WeatherMetric: View {
 
     var body: some View {
         Label(text, systemImage: symbol)
-            .font(.caption.weight(.bold))
+            .font(.caption.weight(.semibold))
             .foregroundStyle(PRTheme.sky)
-            .padding(.horizontal, 9)
+            .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(PRTheme.sky.opacity(0.10), in: Capsule())
     }
@@ -489,61 +414,18 @@ private struct ResidentLensPill: View {
     var body: some View {
         Button(action: action) {
             Label(lens.rawValue, systemImage: lens.symbol)
-                .font(.caption.weight(.bold))
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(isSelected ? .white : PRTheme.teal)
-                .padding(.horizontal, 11)
-                .padding(.vertical, 8)
-                .background(isSelected ? PRTheme.teal : PRTheme.teal.opacity(0.10), in: Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(lens.rawValue) resident lens")
-    }
-}
-
-private struct ResidentBriefRow: View {
-    let item: ResidentBriefItem
-    let showsExternalArrow: Bool
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(item.category.color.opacity(0.14))
-                Image(systemName: item.category.symbol)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(item.category.color)
-            }
-            .frame(width: 36, height: 36)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    Text(item.kicker)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(item.category.color)
-                        .lineLimit(1)
-                    Spacer(minLength: 8)
-                    Label(item.actionLabel, systemImage: showsExternalArrow ? "arrow.up.right" : "chevron.right")
-                        .labelStyle(.iconOnly)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(PRTheme.muted)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 9)
+                .background {
+                    Capsule()
+                        .fill(isSelected ? PRTheme.teal : PRTheme.teal.opacity(0.10))
+                        .shadow(color: isSelected ? PRTheme.teal.opacity(0.30) : .clear, radius: 6, y: 3)
                 }
-
-                Text(item.title)
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(PRTheme.ink)
-                    .lineLimit(2)
-
-                Text(item.summary)
-                    .font(.caption)
-                    .foregroundStyle(PRTheme.muted)
-                    .lineLimit(3)
-
-                SourceBadge(title: item.source.title)
-            }
         }
-        .padding(10)
-        .background(PRTheme.canvas, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .buttonStyle(PRPressableStyle())
+        .accessibilityLabel("\(lens.rawValue) resident lens")
     }
 }
 
@@ -551,29 +433,34 @@ private struct SavedPlaceTile: View {
     let place: LocalPlace
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 8) {
             PlaceThumbnail(
                 url: place.imageURL,
                 tint: place.category.color,
-                height: 78,
+                height: 82,
                 symbol: place.category.symbol,
-                title: place.name
+                title: place.name,
+                radius: 12
             )
             Text(place.name)
-                .font(.subheadline.weight(.bold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(PRTheme.ink)
                 .lineLimit(2)
                 .frame(minHeight: 36, alignment: .topLeading)
             Label(place.category.rawValue, systemImage: place.category.symbol)
-                .font(.caption.weight(.bold))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(place.category.color)
         }
-        .frame(width: 158)
-        .padding(10)
-        .background(PRTheme.paper, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .frame(width: 160)
+        .padding(12)
+        .background {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(PRTheme.paper)
+                .shadow(color: Color.black.opacity(0.04), radius: 10, y: 4)
+        }
         .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(PRTheme.line, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(PRTheme.line, lineWidth: 1)
         }
     }
 }

@@ -6,6 +6,9 @@ struct TownAIResponse {
 }
 
 struct TownAIService {
+    /// Injected from TownConfig so responses speak the active town's name.
+    var townName: String = "Park Ridge"
+
     func placePlan(for place: LocalPlace, nearbyPlaces: [LocalPlace], events: [TownEvent]) -> TownAIResponse {
         let relatedTags = Set(place.tags)
         let relatedPlaces = nearbyPlaces
@@ -132,7 +135,7 @@ struct TownAIService {
         let stepText = workflow.steps.enumerated().map { index, step in
             "\(index + 1). \(step.title): \(step.detail)"
         }.joined(separator: "\n")
-        let firstMove = workflow.steps.first.map { "\($0.title) via \($0.source.title)" } ?? "Open the official Park Ridge source first"
+        let firstMove = workflow.steps.first.map { "\($0.title) via \($0.source.title)" } ?? "Open the official \(townName) source first"
 
         return TownAIResponse(
             text: """
@@ -159,7 +162,7 @@ struct TownAIService {
             let sourceSplit = withoutDash.components(separatedBy: " Source: ")
             return "- \(sourceSplit.first ?? withoutDash)"
         }.joined(separator: "\n")
-        let planText = cleanedPlan.isEmpty ? "- Do now: Open Today and refresh for the latest Park Ridge plan." : cleanedPlan
+        let planText = cleanedPlan.isEmpty ? "- Do now: Open Today and refresh for the latest \(townName) plan." : cleanedPlan
         let weatherText = weather.map { "\n\nWeather read: \($0.summaryLine) \($0.outdoorAdvice)" } ?? ""
 
         return TownAIResponse(
@@ -221,7 +224,7 @@ struct TownAIService {
 
         let picks = (matches.isEmpty ? places.filter { $0.category == .food } : matches).prefix(5)
         let text = picks.map { "- \($0.name): \($0.subcategory). \($0.summary)" }.joined(separator: "\n")
-        return TownAIResponse(text: "Here are the strongest Park Ridge food picks for that:\n\(text)", sourceTitles: Array(Set(picks.map(\.source.title))))
+        return TownAIResponse(text: "Here are the strongest \(townName) food picks for that:\n\(text)", sourceTitles: Array(Set(picks.map(\.source.title))))
     }
 
     private func serviceAnswer(services: [CivicService], matching tags: [String]) -> TownAIResponse {
@@ -246,7 +249,7 @@ struct TownAIService {
         let sources = Array(Set(alerts.map(\.source.title) + events.map(\.source.title) + notices.map(\.source.title) + weatherSources))
 
         return TownAIResponse(
-            text: "Park Ridge pulse:\(weatherText)\n\nAlerts:\n\(alertText)\n\nComing up:\n\(eventText)\n\nNotices:\n\(noticeText)",
+            text: "\(townName) pulse:\(weatherText)\n\nAlerts:\n\(alertText)\n\nComing up:\n\(eventText)\n\nNotices:\n\(noticeText)",
             sourceTitles: sources
         )
     }
@@ -272,7 +275,7 @@ struct TownAIService {
         let serviceText = serviceMatches.prefix(3).map { "- \($0.name): \($0.summary)" }.joined(separator: "\n")
         let sources = Array(Set(placeMatches.map(\.source.title) + serviceMatches.map(\.source.title)))
 
-        return TownAIResponse(text: "Closest Park Ridge matches:\n\(placeText)\n\(serviceText)", sourceTitles: sources)
+        return TownAIResponse(text: "Closest \(townName) matches:\n\(placeText)\n\(serviceText)", sourceTitles: sources)
     }
 
     private func weatherAnswer(weather: TownWeatherSnapshot?, places: [LocalPlace], events: [TownEvent]) -> TownAIResponse {
@@ -295,7 +298,7 @@ struct TownAIService {
 
         return TownAIResponse(
             text: """
-            Park Ridge weather right now: \(weather.summaryLine)
+            \(townName) weather right now: \(weather.summaryLine)
 
             \(weather.outdoorAdvice)
 
@@ -331,6 +334,6 @@ struct TownAIService {
         if place.category == .recreation || place.category == .kids {
             return "getting outside, burning energy, or anchoring a family afternoon."
         }
-        return "a practical Park Ridge stop that solves the moment without leaving town."
+        return "a practical \(townName) stop that solves the moment without leaving town."
     }
 }

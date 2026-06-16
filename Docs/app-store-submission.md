@@ -23,14 +23,13 @@ OpenStreetMap attribution on every generated place.
 Use a public HTTPS URL that loads without authentication:
 
 ```text
-TOWN_PLACE_CATALOG_URL=https://chrisjdimarco.github.io/park-ridge-connect/place-directory/park-ridge-places.json
+TOWN_PLACE_CATALOG_URL=https://chrisjdimarco.github.io/park-ridge-connect-catalog/place-directory/park-ridge-places.json
 ```
 
-Current remote status checked on 2026-06-16: GitHub Pages is not enabled for
-`ChrisJDiMarco/park-ridge-connect` yet (`GET /repos/.../pages` returned 404).
-The repo now includes a Pages deployment workflow that publishes only
-`Docs/place-directory` files into a public artifact, but the final public URL
-still needs to be enabled or hosted elsewhere.
+Current production URL checked on 2026-06-16: the public catalog URL returns
+HTTP 200 and 35 places. It is hosted from the public
+`ChrisJDiMarco/park-ridge-connect-catalog` repository so the app source can
+remain private while App Review can load the JSON without authentication.
 
 Archive command once the final public URL is live:
 
@@ -40,17 +39,20 @@ xcodebuild archive \
   -scheme ParkRidgeConnect \
   -configuration Release \
   -destination 'generic/platform=iOS' \
-  -archivePath build/ParkRidgeConnect.xcarchive \
-  TOWN_PLACE_CATALOG_URL='https://PUBLIC_HOST/place-directory/park-ridge-places.json'
+  -archivePath build/ParkRidgeConnect.xcarchive
 ```
 
-Do not submit until that URL has been opened in a private/incognito browser and
-returns JSON.
+The Xcode target now sets `TOWN_PLACE_CATALOG_URL` to the production URL for
+Debug and Release builds. Before submitting, open that URL in a
+private/incognito browser and confirm it returns JSON.
 
 ## Current Verification
 
 Checked on 2026-06-16:
 
+- Production catalog URL is live:
+  `https://chrisjdimarco.github.io/park-ridge-connect-catalog/place-directory/park-ridge-places.json`
+  returns HTTP 200 and 35 places.
 - `Docs/place-directory/park-ridge-places.json` is valid JSON and contains 35
   decoded Park Ridge places.
 - `Tools/place-directory/build_catalog.py` compiles and keeps the last-good
@@ -59,12 +61,12 @@ Checked on 2026-06-16:
   checked-in catalog decode test.
 - Release simulator build succeeded with store validation enabled.
 - iOS archive succeeded for bundle `com.chrisdimarco.ParkRidgeConnect`, version
-  `1.0`, build `1`, minimum iOS `17.0`.
+  `1.0`, build `1`, minimum iOS `17.0`, and includes the production
+  `TOWN_PLACE_CATALOG_URL` in its generated Info.plist.
 
 The current archive is not ready to upload because it signed with
 `Apple Development: Chris DiMarco (R5FQ2HG7F5)` and no Apple Distribution
-identity is installed locally. The verification archive also did not include
-`TOWN_PLACE_CATALOG_URL`, because the public catalog URL is not live yet.
+identity is installed locally.
 
 ## App Privacy Answers
 
@@ -116,10 +118,10 @@ https://developer.apple.com/help/app-store-connect/manage-app-information/upload
 
 ## Pre-Submit Checklist
 
-- Public catalog URL loads without authentication.
-- `TOWN_PLACE_CATALOG_URL` is set for the archive submitted to App Store Connect.
-- App Store distribution signing/export succeeds, not just local development signing.
-- App Privacy answers are published and match the exact build configuration.
-- Privacy policy URL is present in App Store Connect.
-- Screenshots are uploaded.
-- Review notes include the data-source/cached-fallback explanation above.
+- [x] Public catalog URL loads without authentication.
+- [x] `TOWN_PLACE_CATALOG_URL` is set for the archive submitted to App Store Connect.
+- [ ] App Store distribution signing/export succeeds, not just local development signing.
+- [ ] App Privacy answers are published and match the exact build configuration.
+- [ ] Privacy policy URL is present in App Store Connect.
+- [ ] Screenshots are uploaded.
+- [ ] Review notes include the data-source/cached-fallback explanation above.

@@ -8,21 +8,24 @@ struct ExploreView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 12) {
+                LazyVStack(spacing: PRTheme.sectionSpacing) {
                     categoryRail
 
                     let results = store.filteredPlaces(searchText: searchText, category: selectedCategory)
                     if results.isEmpty {
                         EmptyResidentState(title: "No local places match that search", systemImage: "magnifyingglass")
                     } else {
+                        resultsHeader(count: results.count)
                         ForEach(results) { place in
                             PlaceCard(place: place)
                         }
                     }
                 }
-                .padding(16)
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 96)
             }
-            .background(PRTheme.canvas.ignoresSafeArea())
+            .background { TownBackdrop() }
             .navigationTitle("Explore")
             .searchable(text: $searchText, prompt: "Food, playground, pool, train, forms")
             .onAppear {
@@ -31,19 +34,35 @@ struct ExploreView: View {
         }
     }
 
+    private func resultsHeader(count: Int) -> some View {
+        HStack {
+            Text(selectedCategory?.rawValue ?? "All Places")
+                .font(.system(.title3, design: .rounded).weight(.bold))
+                .foregroundStyle(PRTheme.ink)
+            Spacer()
+            CountBadge(text: "\(count)", tint: selectedCategory?.color ?? PRTheme.teal)
+        }
+        .padding(.horizontal, 2)
+    }
+
     private var categoryRail: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
+            HStack(spacing: 8) {
                 CategoryPill(category: nil, isSelected: selectedCategory == nil) {
-                    selectedCategory = nil
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                        selectedCategory = nil
+                    }
                 }
                 ForEach(TownCategory.allCases) { category in
                     CategoryPill(category: category, isSelected: selectedCategory == category) {
-                        selectedCategory = category
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                            selectedCategory = category
+                        }
                     }
                 }
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 2)
         }
     }
 

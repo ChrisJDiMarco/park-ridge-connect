@@ -492,6 +492,113 @@ final class TownAIServiceTests: XCTestCase {
         XCTAssertFalse(reloadedStore.isFavorite(place))
         defaults.removePersistentDomain(forName: suiteName)
     }
+
+    func testOpenStreetMapPlaceParserBuildsLocalPlace() throws {
+        let json = """
+        {
+          "elements": [
+            {
+              "type": "node",
+              "id": 12345,
+              "tags": {
+                "name": "Bean There Cafe",
+                "amenity": "cafe",
+                "cuisine": "coffee_shop",
+                "addr:housenumber": "10",
+                "addr:street": "Park Avenue",
+                "addr:city": "Park Ridge",
+                "addr:state": "NJ",
+                "addr:postcode": "07656",
+                "phone": "201-555-0100",
+                "website": "beanthere.example"
+              }
+            }
+          ]
+        }
+        """
+
+        let places = try PlaceDirectoryRefreshService.parseOpenStreetMapPlaces(
+            Data(json.utf8),
+            source: KnowledgeSource(
+                id: "openstreetmap",
+                title: "OpenStreetMap",
+                url: URL(string: "https://www.openstreetmap.org/copyright")!,
+                summary: "Community-maintained place data."
+            )
+        )
+
+        XCTAssertEqual(places.count, 1)
+        XCTAssertEqual(places[0].id, "osm-node-12345")
+        XCTAssertEqual(places[0].name, "Bean There Cafe")
+        XCTAssertEqual(places[0].category, .food)
+        XCTAssertEqual(places[0].address, "10 Park Avenue, Park Ridge, NJ, 07656")
+        XCTAssertEqual(places[0].phone, "201-555-0100")
+        XCTAssertEqual(places[0].website?.absoluteString, "https://beanthere.example")
+        XCTAssertEqual(places[0].source.title, "OpenStreetMap")
+    }
+
+    func testCheckedInPlaceCatalogDecodesForApp() throws {
+        let testsFolder = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        let projectRoot = testsFolder.deletingLastPathComponent()
+        let catalogURL = projectRoot
+            .appendingPathComponent("Docs")
+            .appendingPathComponent("place-directory")
+            .appendingPathComponent("park-ridge-places.json")
+        let data = try Data(contentsOf: catalogURL)
+        let catalog = try JSONDecoder().decode(CheckedInPlaceCatalog.self, from: data)
+        let neighboringTownNames = ["Montvale", "Westwood", "Hillsdale", "Woodcliff", "Emerson"]
+
+        XCTAssertGreaterThanOrEqual(catalog.places.count, 20)
+        XCTAssertTrue(catalog.places.allSatisfy { $0.source.title == "OpenStreetMap" })
+        XCTAssertFalse(catalog.places.contains { place in
+            neighboringTownNames.contains { place.name.localizedCaseInsensitiveContains($0) }
+        })
+    }
+
+    @MainActor
+    func testPlaceDirectoryRefreshMergesAndUpdatesSearchCache() async {
+        let suiteName = "ParkRidgeConnectTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        let livePlace = LocalPlace(
+            id: "osm-node-987",
+            name: "New Park Ridge Bakery",
+            category: .food,
+            subcategory: "Bakery",
+            summary: "Fresh listing from OpenStreetMap.",
+            address: "99 Park Avenue, Park Ridge, NJ 07656",
+            phone: nil,
+            website: URL(string: "https://bakery.example"),
+            imageURL: nil,
+            highlights: ["Bakery", "OpenStreetMap listing"],
+            tags: ["food", "bakery"],
+            source: KnowledgeSource(
+                id: "openstreetmap",
+                title: "OpenStreetMap",
+                url: URL(string: "https://www.openstreetmap.org/copyright")!,
+                summary: "Community-maintained place data."
+            )
+        )
+        let store = TownStore(
+            defaults: defaults,
+            placeDirectoryService: StubPlaceDirectoryService(result: PlaceDirectoryRefreshResult(
+                places: [livePlace],
+                fetchedAt: juneThird2026,
+                usedCachedData: false
+            ))
+        )
+
+        await store.refreshPlaceDirectory(force: true)
+
+        XCTAssertEqual(store.directoryStatus, "Live place directory updated")
+        XCTAssertNotNil(store.place(withID: livePlace.id))
+        XCTAssertTrue(store.filteredPlaces(searchText: "bakery", category: nil).contains { $0.id == livePlace.id })
+        defaults.removePersistentDomain(forName: suiteName)
+    }
+}
+
+private struct CheckedInPlaceCatalog: Decodable {
+    let places: [LocalPlace]
 }
 
 private struct StubWeatherService: WeatherFetching {
@@ -499,5 +606,13 @@ private struct StubWeatherService: WeatherFetching {
 
     func refreshSnapshot() async throws -> TownWeatherSnapshot {
         snapshot
+    }
+}
+
+private struct StubPlaceDirectoryService: PlaceDirectoryFetching {
+    let result: PlaceDirectoryRefreshResult
+
+    func refresh(force: Bool) async throws -> PlaceDirectoryRefreshResult {
+        result
     }
 }

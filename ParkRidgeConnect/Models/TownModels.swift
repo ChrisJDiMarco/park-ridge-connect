@@ -1,6 +1,6 @@
 import Foundation
 
-enum TownCategory: String, CaseIterable, Identifiable {
+enum TownCategory: String, CaseIterable, Identifiable, Codable {
     case food = "Food"
     case kids = "Kids"
     case recreation = "Recreation"
@@ -32,7 +32,7 @@ enum TownCategory: String, CaseIterable, Identifiable {
     }
 }
 
-enum NoticeSeverity: String {
+enum NoticeSeverity: String, Codable {
     case info = "Info"
     case advisory = "Advisory"
     case urgent = "Urgent"
@@ -60,14 +60,14 @@ enum ResidentLens: String, CaseIterable, Identifiable {
     }
 }
 
-struct KnowledgeSource: Identifiable, Hashable {
+struct KnowledgeSource: Identifiable, Hashable, Codable {
     let id: String
     let title: String
     let url: URL
     let summary: String
 }
 
-struct TownAlert: Identifiable, Hashable {
+struct TownAlert: Identifiable, Hashable, Codable {
     let id: String
     let title: String
     let severity: NoticeSeverity
@@ -76,7 +76,7 @@ struct TownAlert: Identifiable, Hashable {
     let source: KnowledgeSource
 }
 
-struct TownNotice: Identifiable, Hashable {
+struct TownNotice: Identifiable, Hashable, Codable {
     let id: String
     let title: String
     let summary: String
@@ -84,7 +84,7 @@ struct TownNotice: Identifiable, Hashable {
     let tags: [String]
 }
 
-struct TownEvent: Identifiable, Hashable {
+struct TownEvent: Identifiable, Hashable, Codable {
     let id: String
     let title: String
     let dateText: String
@@ -96,7 +96,7 @@ struct TownEvent: Identifiable, Hashable {
     let priority: Int
 }
 
-struct LocalPlace: Identifiable, Hashable {
+struct LocalPlace: Identifiable, Hashable, Codable {
     let id: String
     let name: String
     let category: TownCategory
@@ -113,11 +113,11 @@ struct LocalPlace: Identifiable, Hashable {
     var mapURL: URL? {
         guard let address else { return nil }
         let query = "\(name), \(address)".addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? name
-        return URL(string: "http://maps.apple.com/?q=\(query)")
+        return URL(string: "https://maps.apple.com/?q=\(query)")
     }
 }
 
-struct CivicService: Identifiable, Hashable {
+struct CivicService: Identifiable, Hashable, Codable {
     let id: String
     let name: String
     let department: String
@@ -130,7 +130,7 @@ struct CivicService: Identifiable, Hashable {
     let source: KnowledgeSource
 }
 
-struct CivicWorkflowStep: Identifiable, Hashable {
+struct CivicWorkflowStep: Identifiable, Hashable, Codable {
     let id: String
     let title: String
     let detail: String
@@ -138,7 +138,7 @@ struct CivicWorkflowStep: Identifiable, Hashable {
     let source: KnowledgeSource
 }
 
-struct CivicWorkflow: Identifiable, Hashable {
+struct CivicWorkflow: Identifiable, Hashable, Codable {
     let id: String
     let title: String
     let kicker: String
@@ -203,16 +203,16 @@ struct TownWeatherSnapshot: Hashable {
 
     var outdoorAdvice: String {
         if let precipitationChance, precipitationChance >= 50 {
-            return "Build in an indoor fallback before playgrounds, fields, or the Town Picnic."
+            return "Build in an indoor fallback before playgrounds, fields, or outdoor events."
         }
         if temperature >= 88 {
             return "Good to go outside, but plan shade, water, and shorter park windows."
         }
         if temperature <= 40 {
-            return "Layer up before walking, commuting, or staying out at borough events."
+            return "Layer up before walking, commuting, or staying out at town events."
         }
         if shortForecast.localizedCaseInsensitiveContains("Sunny") {
-            return "Strong outdoor window for Memorial Park, Mill Pond, errands, and after-school energy."
+            return "Strong outdoor window for parks, errands, and after-school energy."
         }
         return "Good enough for quick errands; check again before longer outdoor plans."
     }
@@ -278,4 +278,102 @@ struct BoroughRefreshResult {
     let events: [TownEvent]
     let alerts: [TownAlert]
     let fetchedAt: Date
+}
+
+// MARK: - Town Template Configuration
+//
+// Everything town-specific lives in a TownPack (config + content). The app is
+// a generic engine: drop in a different TownPack.json and it becomes another
+// town's app. Packs are drafted by Tools/town-onboarding and human-reviewed.
+
+struct TownConfig: Codable, Hashable {
+    /// "Park Ridge"
+    var townName: String
+    /// "Park Ridge Connect" — header + app branding
+    var appTitle: String
+    /// "NJ"
+    var state: String
+    /// First assistant message shown in Ask
+    var assistantWelcome: String
+    var assistantWelcomeSourceTitles: [String]
+    /// Horizontal suggestion chips in Ask
+    var assistantSuggestedPrompts: [String]
+    var townHall: TownHallInfo
+    var weather: WeatherConfig
+    var refresh: RefreshConfig
+    var placeDirectory: PlaceDirectoryConfig?
+    var anchors: TownAnchors
+}
+
+/// The official seat-of-government contact card shown on Services.
+struct TownHallInfo: Codable, Hashable {
+    var name: String
+    var addressLine: String
+    var hoursLine: String
+    var phone: String
+}
+
+/// National Weather Service lookup. Lat/lon resolves the hourly grid via
+/// api.weather.gov/points; the fallback URL is used if that lookup fails.
+struct WeatherConfig: Codable, Hashable {
+    var latitude: Double
+    var longitude: Double
+    var fallbackHourlyForecastURL: URL?
+    /// Contact email NWS asks for in the User-Agent header
+    var contactEmail: String
+}
+
+/// Live homepage scrape settings for the town's official site.
+struct RefreshConfig: Codable, Hashable {
+    var homepageURL: URL
+    var sourceTitle: String
+    var sourceSummary: String
+    /// Heading text that precedes the news list (e.g. "News & Announcements")
+    var newsSectionMarker: String
+    /// Heading text that precedes the calendar list (e.g. "Borough Calendar")
+    var calendarSectionMarker: String
+    /// Lines containing any of these become live alerts
+    var alertKeywords: [String]
+}
+
+/// A compliant live place directory source. Prefer `remoteCatalogURL` for
+/// production because it lets us cache and review data server-side before the
+/// app consumes it. `overpassAPIURL` is a small, attributed fallback.
+struct PlaceDirectoryConfig: Codable, Hashable {
+    var remoteCatalogURL: URL?
+    var openStreetMapSourceURL: URL
+    var overpassAPIURL: URL
+    var minimumRefreshIntervalHours: Int
+    var southLatitude: Double
+    var westLongitude: Double
+    var northLatitude: Double
+    var eastLongitude: Double
+}
+
+/// IDs of pack content the lens engine pins into briefs and plans.
+/// All optional — missing anchors simply fall back to generic picks.
+struct TownAnchors: Codable, Hashable {
+    var indoorFallbackPlaceID: String?
+    var outdoorParkPlaceID: String?
+    var nightOutPlaceID: String?
+    var dinnerPlaceID: String?
+    var townHallServiceID: String?
+    var alertsServiceID: String?
+    var trashServiceID: String?
+    var commuterServiceID: String?
+    var seniorRideServiceID: String?
+    var schoolsServiceID: String?
+    var formsServiceID: String?
+    var waterSewerServiceID: String?
+}
+
+/// One complete, self-contained town: configuration plus seeded content.
+struct TownPack: Codable {
+    var config: TownConfig
+    var alerts: [TownAlert]
+    var notices: [TownNotice]
+    var events: [TownEvent]
+    var places: [LocalPlace]
+    var services: [CivicService]
+    var civicWorkflows: [CivicWorkflow]
 }

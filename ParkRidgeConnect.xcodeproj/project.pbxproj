@@ -24,6 +24,7 @@
 		A20000000000000000000015 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
 		A20000000000000000000016 /* TownAIServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000016 /* TownAIServiceTests.swift */; };
 		A20000000000000000000017 /* ParkRidgeWeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000017 /* ParkRidgeWeatherService.swift */; };
+		A20000000000000000000018 /* PlaceDirectoryRefreshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000018 /* PlaceDirectoryRefreshService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +55,7 @@
 		F20000000000000000000015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F20000000000000000000016 /* TownAIServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TownAIServiceTests.swift; sourceTree = "<group>"; };
 		F20000000000000000000017 /* ParkRidgeWeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParkRidgeWeatherService.swift; sourceTree = "<group>"; };
+		F20000000000000000000018 /* PlaceDirectoryRefreshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceDirectoryRefreshService.swift; sourceTree = "<group>"; };
 		F20000000000000000000020 /* ParkRidgeConnect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ParkRidgeConnect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F20000000000000000000021 /* ParkRidgeConnectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ParkRidgeConnectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -111,6 +113,7 @@
 			children = (
 				F20000000000000000000003 /* ParkRidgeSeedData.swift */,
 				F20000000000000000000004 /* BoroughRefreshService.swift */,
+				F20000000000000000000018 /* PlaceDirectoryRefreshService.swift */,
 				F20000000000000000000017 /* ParkRidgeWeatherService.swift */,
 				F20000000000000000000005 /* TownAIService.swift */,
 				F20000000000000000000006 /* VoiceServices.swift */,
@@ -175,6 +178,7 @@
 				S20000000000000000000001 /* Sources */,
 				BF2000000000000000000001 /* Frameworks */,
 				R20000000000000000000001 /* Resources */,
+				SH2000000000000000000001 /* Inject Place Catalog URL */,
 			);
 			buildRules = (
 			);
@@ -252,6 +256,29 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		SH2000000000000000000001 /* Inject Place Catalog URL */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Inject Place Catalog URL";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\nplist=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\nurl=\"${TOWN_PLACE_CATALOG_URL:-}\"\nif [ -n \"$url\" ]; then\n    /usr/libexec/PlistBuddy -c \"Set :TOWN_PLACE_CATALOG_URL $url\" \"$plist\" 2>/dev/null || /usr/libexec/PlistBuddy -c \"Add :TOWN_PLACE_CATALOG_URL string $url\" \"$plist\"\nelse\n    /usr/libexec/PlistBuddy -c \"Delete :TOWN_PLACE_CATALOG_URL\" \"$plist\" 2>/dev/null || true\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		S20000000000000000000001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -261,6 +288,7 @@
 				A20000000000000000000002 /* TownModels.swift in Sources */,
 				A20000000000000000000003 /* ParkRidgeSeedData.swift in Sources */,
 				A20000000000000000000004 /* BoroughRefreshService.swift in Sources */,
+				A20000000000000000000018 /* PlaceDirectoryRefreshService.swift in Sources */,
 				A20000000000000000000017 /* ParkRidgeWeatherService.swift in Sources */,
 				A20000000000000000000005 /* TownAIService.swift in Sources */,
 				A20000000000000000000006 /* VoiceServices.swift in Sources */,
@@ -343,6 +371,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Park Ridge Connect uses the microphone so residents can ask the town assistant questions by voice.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Park Ridge Connect uses speech recognition to turn spoken town questions into text.";
+				INFOPLIST_KEY_TOWN_PLACE_CATALOG_URL = "$(TOWN_PLACE_CATALOG_URL)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -353,6 +382,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TOWN_PLACE_CATALOG_URL = "https://chrisjdimarco.github.io/park-ridge-connect-catalog/place-directory/park-ridge-places.json";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -372,6 +402,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Park Ridge Connect uses the microphone so residents can ask the town assistant questions by voice.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Park Ridge Connect uses speech recognition to turn spoken town questions into text.";
+				INFOPLIST_KEY_TOWN_PLACE_CATALOG_URL = "$(TOWN_PLACE_CATALOG_URL)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -382,6 +413,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
+				TOWN_PLACE_CATALOG_URL = "https://chrisjdimarco.github.io/park-ridge-connect-catalog/place-directory/park-ridge-places.json";
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;

@@ -211,3 +211,88 @@ enum ParkRidgeSeedData {
         )
     ]
 }
+
+// MARK: - Park Ridge TownPack
+
+extension ParkRidgeSeedData {
+    static let config = TownConfig(
+        townName: "Park Ridge",
+        appTitle: "Park Ridge Connect",
+        state: "NJ",
+        assistantWelcome: "Ask me anything about Park Ridge: what is happening this week, where to eat, what to do with kids, how to handle trash/recycling, water restrictions, permits, trains, schools, or local services.",
+        assistantWelcomeSourceTitles: ["Park Ridge Borough", "Park Ridge Recreation", "Park Ridge Public Library"],
+        assistantSuggestedPrompts: [
+            "What is happening in town this week?",
+            "Where should I take kids after school?",
+            "Best dinner or drinks tonight?",
+            "How do I handle trash, water, or permits?",
+            "How do I commute to NYC?"
+        ],
+        townHall: TownHallInfo(
+            name: "Borough Hall",
+            addressLine: "53 Park Avenue, Park Ridge, NJ 07656",
+            hoursLine: "Mon-Fri, 8:00 AM - 4:30 PM",
+            phone: "201-573-1800"
+        ),
+        weather: WeatherConfig(
+            latitude: 40.9912,
+            longitude: -74.0326,
+            fallbackHourlyForecastURL: URL(string: "https://api.weather.gov/gridpoints/OKX/30,54/forecast/hourly"),
+            contactEmail: "chris.john.dimarco@gmail.com"
+        ),
+        refresh: RefreshConfig(
+            homepageURL: URL(string: "https://parkridgeboro.com/")!,
+            sourceTitle: "Park Ridge Borough",
+            sourceSummary: "Official borough site for alerts, calendar, departments, payments, public notices, and resident resources.",
+            newsSectionMarker: "News & Announcements",
+            calendarSectionMarker: "Borough Calendar",
+            alertKeywords: ["water restrictions", "budget public hearing", "livestream"]
+        ),
+        placeDirectory: .parkRidgeDefault,
+        anchors: TownAnchors(
+            indoorFallbackPlaceID: "library",
+            outdoorParkPlaceID: "memorial-park",
+            nightOutPlaceID: "four-leaves",
+            dinnerPlaceID: "park-steakhouse",
+            townHallServiceID: "borough-hall",
+            alertsServiceID: "alerts",
+            trashServiceID: "trash-recycling",
+            commuterServiceID: "commuter",
+            seniorRideServiceID: "senior-ride",
+            schoolsServiceID: "schools",
+            formsServiceID: "forms",
+            waterSewerServiceID: "water-sewer"
+        )
+    )
+
+    static var pack: TownPack {
+        TownPack(
+            config: config,
+            alerts: alerts,
+            notices: notices,
+            events: events,
+            places: places,
+            services: services,
+            civicWorkflows: civicWorkflows
+        )
+    }
+}
+
+// MARK: - Pack Loader
+
+/// Loads the active town. If a TownPack.json is bundled (the output of
+/// Tools/town-onboarding), it wins; otherwise the built-in Park Ridge
+/// seed pack keeps the app fully functional.
+enum TownPackLoader {
+    static func load(bundle: Bundle = .main) -> TownPack {
+        if let url = bundle.url(forResource: "TownPack", withExtension: "json"),
+           let data = try? Data(contentsOf: url) {
+            do {
+                return try JSONDecoder().decode(TownPack.self, from: data)
+            } catch {
+                assertionFailure("TownPack.json is bundled but failed to decode: \(error)")
+            }
+        }
+        return ParkRidgeSeedData.pack
+    }
+}

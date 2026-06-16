@@ -5,6 +5,13 @@ struct ParkRidgeConnectApp: App {
     @State private var store = TownStore()
     @State private var voice = VoiceController()
 
+    init() {
+        // Larger shared cache keeps AsyncImage thumbnails warm so list
+        // scrolling never stalls on re-downloads.
+        URLCache.shared.memoryCapacity = 32 * 1024 * 1024
+        URLCache.shared.diskCapacity = 128 * 1024 * 1024
+    }
+
     var body: some Scene {
         WindowGroup {
             RootView()

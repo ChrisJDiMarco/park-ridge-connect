@@ -1,20 +1,32 @@
 import Foundation
 
+/// Scrapes the town's official homepage for live news, calendar, and alert
+/// lines. Section markers and alert keywords come from `RefreshConfig`.
 struct BoroughRefreshService {
-    private let homeURL = URL(string: "https://parkridgeboro.com/")!
+    private let config: RefreshConfig
     private let referenceDate: Date
     private let calendar: Calendar
 
-    init(referenceDate: Date = Date(), calendar: Calendar = .current) {
+    init(config: RefreshConfig = ParkRidgeSeedData.config.refresh, referenceDate: Date = Date(), calendar: Calendar = .current) {
+        self.config = config
         self.referenceDate = referenceDate
         self.calendar = calendar
     }
 
+    private var liveSource: KnowledgeSource {
+        KnowledgeSource(
+            id: "town-homepage",
+            title: config.sourceTitle,
+            url: config.homepageURL,
+            summary: config.sourceSummary
+        )
+    }
+
     func refresh() async throws -> BoroughRefreshResult {
-        let (data, _) = try await URLSession.shared.data(from: homeURL)
+        let (data, _) = try await URLSession.shared.data(from: config.homepageURL)
         let html = String(decoding: data, as: UTF8.self)
         let lines = normalizedLines(from: html)
-        let source = ParkRidgeSeedData.borough
+        let source = liveSource
 
         let notices = extractNews(from: lines, source: source)
         let events = extractCalendar(from: lines, source: source)
@@ -41,7 +53,7 @@ struct BoroughRefreshService {
     }
 
     func extractNews(from lines: [String], source: KnowledgeSource) -> [TownNotice] {
-        guard let start = lines.firstIndex(where: { $0.localizedCaseInsensitiveContains("News & Announcements") }) else {
+        guard let start = lines.firstIndex(where: { $0.localizedCaseInsensitiveContains(config.newsSectionMarker) }) else {
             return []
         }
 
@@ -67,13 +79,10 @@ struct BoroughRefreshService {
     }
 
     func extractAlerts(from lines: [String], source: KnowledgeSource) -> [TownAlert] {
-        let alertLines = lines.filter {
-            isHumanContent($0) &&
-            !isPastDatedItem($0) && (
-                $0.localizedCaseInsensitiveContains("water restrictions") ||
-                $0.localizedCaseInsensitiveContains("budget public hearing") ||
-                $0.localizedCaseInsensitiveContains("livestream")
-            )
+        let alertLines = lines.filter { line in
+            isHumanContent(line) &&
+            !isPastDatedItem(line) &&
+            config.alertKeywords.contains { line.localizedCaseInsensitiveContains($0) }
         }
 
         return Array(alertLines.prefix(3)).enumerated().map { index, title in
@@ -89,7 +98,7 @@ struct BoroughRefreshService {
     }
 
     func extractCalendar(from lines: [String], source: KnowledgeSource) -> [TownEvent] {
-        guard let start = lines.lastIndex(where: { $0.localizedCaseInsensitiveContains("Borough Calendar") }) else {
+        guard let start = lines.lastIndex(where: { $0.localizedCaseInsensitiveContains(config.calendarSectionMarker) }) else {
             return []
         }
 
@@ -113,7 +122,7 @@ struct BoroughRefreshService {
                         timeText: detail.replacingOccurrences(of: "Date ", with: ""),
                         summary: "Live borough calendar item. Open the official calendar for full agenda details.",
                         category: category(for: title),
-                        audience: "Park Ridge residents",
+                        audience: "Local residents",
                         source: source,
                         priority: 6
                     )

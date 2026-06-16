@@ -9,7 +9,7 @@ struct ServicesView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 12) {
+                LazyVStack(spacing: PRTheme.sectionSpacing) {
                     serviceCategories
 
                     let workflows = store.filteredCivicWorkflows(searchText: searchText, category: selectedCategory)
@@ -29,28 +29,21 @@ struct ServicesView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 16)
+                .padding(.top, 12)
                 .padding(.bottom, 96)
             }
-            .background(PRTheme.canvas.ignoresSafeArea())
+            .background { TownBackdrop() }
             .navigationTitle("Services")
             .searchable(text: $searchText, prompt: "Water, permits, recycling, schools")
         }
     }
 
     private func civicWorkflowSection(_ workflows: [CivicWorkflow]) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("Civic Action Center", systemImage: "checklist.checked")
-                    .font(.headline)
-                Spacer()
-                Text("\(workflows.count)")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(PRTheme.teal)
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 5)
-                    .background(PRTheme.teal.opacity(0.10), in: Capsule())
+        VStack(alignment: .leading, spacing: 12) {
+            SectionHeader("Civic Action Center", symbol: "checklist.checked") {
+                CountBadge(text: "\(workflows.count)")
             }
+            .padding(.horizontal, 2)
 
             ForEach(workflows.prefix(4)) { workflow in
                 CivicWorkflowCard(
@@ -67,37 +60,61 @@ struct ServicesView: View {
 
     private var serviceCategories: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
+            HStack(spacing: 8) {
                 CategoryPill(category: nil, isSelected: selectedCategory == nil) {
-                    selectedCategory = nil
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                        selectedCategory = nil
+                    }
                 }
                 ForEach([TownCategory.government, .services, .utilities, .emergency, .transit, .schools, .recreation, .library]) { category in
                     CategoryPill(category: category, isSelected: selectedCategory == category) {
-                        selectedCategory = category
+                        withAnimation(.spring(response: 0.28, dampingFraction: 0.85)) {
+                            selectedCategory = category
+                        }
                     }
                 }
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 2)
         }
     }
 
     private var officialContact: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "building.2.fill")
-                .foregroundStyle(PRTheme.teal)
-                .font(.title2)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Borough Hall")
-                    .font(.headline)
-                Text("53 Park Avenue, Park Ridge, NJ 07656")
-                    .font(.subheadline)
+        HStack(alignment: .center, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(PRTheme.brandGradient)
+                Image(systemName: "building.2.fill")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 46, height: 46)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(store.config.townHall.name)
+                    .font(.system(.headline, design: .rounded).weight(.semibold))
+                    .foregroundStyle(PRTheme.ink)
+                Text(store.config.townHall.addressLine)
+                    .font(.footnote)
                     .foregroundStyle(PRTheme.muted)
-                Text("Mon-Fri, 8:00 AM - 4:30 PM")
+                Text(store.config.townHall.hoursLine)
                     .font(.caption)
                     .foregroundStyle(PRTheme.muted)
             }
+
             Spacer()
-            ActionLink(title: "Call", systemImage: "phone", url: phoneURL("201-573-1800"))
+
+            if let url = phoneURL(store.config.townHall.phone) {
+                Link(destination: url) {
+                    Image(systemName: "phone.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(PRTheme.teal)
+                        .frame(width: 40, height: 40)
+                        .background(PRTheme.teal.opacity(0.12), in: Circle())
+                }
+                .buttonStyle(PRPressableStyle())
+                .accessibilityLabel("Call \(store.config.townHall.name)")
+            }
         }
         .residentCard()
     }
@@ -119,68 +136,70 @@ private struct CivicWorkflowCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(workflow.category.color.opacity(0.14))
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(workflow.category.color.opacity(0.12))
                     Image(systemName: workflow.symbol)
-                        .font(.title3.weight(.bold))
+                        .font(.title3.weight(.semibold))
                         .foregroundStyle(workflow.category.color)
                 }
                 .frame(width: 46, height: 46)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(workflow.kicker)
-                        .font(.caption.weight(.black))
+                    Text(workflow.kicker.uppercased())
+                        .font(.caption2.weight(.bold))
+                        .kerning(0.6)
                         .foregroundStyle(workflow.category.color)
                     Text(workflow.title)
-                        .font(.headline)
+                        .font(.system(.headline, design: .rounded).weight(.semibold))
                         .foregroundStyle(PRTheme.ink)
                     Text(workflow.summary)
                         .font(.subheadline)
                         .foregroundStyle(PRTheme.muted)
+                        .lineSpacing(2)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 7) {
+            VStack(alignment: .leading, spacing: 9) {
                 ForEach(workflow.steps.prefix(3)) { step in
-                    HStack(alignment: .top, spacing: 8) {
+                    HStack(alignment: .top, spacing: 9) {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.caption.weight(.bold))
+                            .font(.footnote.weight(.semibold))
                             .foregroundStyle(PRTheme.teal)
-                            .padding(.top, 2)
+                            .padding(.top, 1)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(step.title)
-                                .font(.caption.weight(.bold))
+                                .font(.footnote.weight(.semibold))
                                 .foregroundStyle(PRTheme.ink)
                                 .lineLimit(1)
                             Text(step.detail)
-                                .font(.caption)
+                                .font(.footnote)
                                 .foregroundStyle(PRTheme.muted)
                                 .lineLimit(2)
                         }
                     }
                 }
             }
-            .padding(10)
-            .background(PRTheme.canvas, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .innerTile()
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
+                HStack(spacing: 6) {
                     ForEach(workflow.sourceTitles, id: \.self) { title in
                         SourceBadge(title: title)
                     }
                 }
             }
 
-            HStack {
+            HStack(spacing: 8) {
                 Button(action: askAction) {
                     Label("Ask AI", systemImage: "sparkles")
-                        .font(.footnote.weight(.bold))
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(PRTheme.teal, in: Capsule())
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-                .tint(PRTheme.teal)
+                .buttonStyle(PRPressableStyle())
                 .accessibilityLabel("Ask AI about \(workflow.title)")
 
                 ActionLink(

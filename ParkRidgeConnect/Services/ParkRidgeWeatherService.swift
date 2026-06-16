@@ -4,18 +4,38 @@ protocol WeatherFetching {
     func refreshSnapshot() async throws -> TownWeatherSnapshot
 }
 
+/// NWS-backed weather, configured per town via `WeatherConfig`.
 struct ParkRidgeWeatherService: WeatherFetching {
-    private static let pointsURL = URL(string: "https://api.weather.gov/points/40.9912,-74.0326")!
-    private static let fallbackHourlyForecastURL = URL(string: "https://api.weather.gov/gridpoints/OKX/30,54/forecast/hourly")!
-    private static let userAgent = "ParkRidgeConnect/1.0 (chris.john.dimarco@gmail.com)"
+    private let config: WeatherConfig
+
+    init(config: WeatherConfig = ParkRidgeSeedData.config.weather) {
+        self.config = config
+    }
+
+    private var pointsURL: URL {
+        URL(string: "https://api.weather.gov/points/\(config.latitude),\(config.longitude)")!
+    }
+
+    private var userAgent: String {
+        "TownConnect/1.0 (\(config.contactEmail))"
+    }
+
+    private var source: KnowledgeSource {
+        KnowledgeSource(
+            id: "nws-weather",
+            title: "National Weather Service",
+            url: config.fallbackHourlyForecastURL ?? pointsURL,
+            summary: "Official National Weather Service hourly forecast for the area."
+        )
+    }
 
     func refreshSnapshot() async throws -> TownWeatherSnapshot {
         let forecastURL = try await hourlyForecastURL()
         let data = try await fetchData(from: forecastURL)
-        return try Self.parseHourlyForecast(data)
+        return try Self.parseHourlyForecast(data, source: source)
     }
 
-    static func parseHourlyForecast(_ data: Data, fallbackGeneratedAt: Date = Date()) throws -> TownWeatherSnapshot {
+    static func parseHourlyForecast(_ data: Data, source: KnowledgeSource = ParkRidgeSeedData.weather, fallbackGeneratedAt: Date = Date()) throws -> TownWeatherSnapshot {
         let forecast = try JSONDecoder().decode(NWSHourlyForecast.self, from: data)
         guard let current = forecast.properties.periods.first else {
             throw WeatherError.missingCurrentPeriod
@@ -33,23 +53,29 @@ struct ParkRidgeWeatherService: WeatherFetching {
             windSpeed: current.windSpeed,
             windDirection: current.windDirection,
             generatedAt: generatedAt,
-            source: ParkRidgeSeedData.weather
+            source: source
         )
     }
 
     private func hourlyForecastURL() async throws -> URL {
         do {
-            let data = try await fetchData(from: Self.pointsURL)
+            let data = try await fetchData(from: pointsURL)
             let point = try JSONDecoder().decode(NWSPoint.self, from: data)
-            return point.properties.forecastHourly ?? Self.fallbackHourlyForecastURL
+            if let url = point.properties.forecastHourly ?? config.fallbackHourlyForecastURL {
+                return url
+            }
+            throw WeatherError.badResponse
         } catch {
-            return Self.fallbackHourlyForecastURL
+            if let fallback = config.fallbackHourlyForecastURL {
+                return fallback
+            }
+            throw error
         }
     }
 
     private func fetchData(from url: URL) async throws -> Data {
         var request = URLRequest(url: url)
-        request.setValue(Self.userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("application/geo+json", forHTTPHeaderField: "Accept")
 
         let (data, response) = try await URLSession.shared.data(for: request)

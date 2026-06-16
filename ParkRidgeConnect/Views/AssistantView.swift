@@ -5,20 +5,16 @@ struct AssistantView: View {
     @Environment(VoiceController.self) private var voice
     @State private var draft = ""
 
-    private let prompts = [
-        "What is happening in town this week?",
-        "Where should I take kids after school?",
-        "Best dinner or drinks tonight?",
-        "How do I handle trash, water, or permits?",
-        "How do I commute to NYC?"
-    ]
+    private var prompts: [String] {
+        store.config.assistantSuggestedPrompts
+    }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 12) {
+                        LazyVStack(alignment: .leading, spacing: 14) {
                             promptRail
                             ForEach(store.messages) { message in
                                 MessageBubble(message: message) {
@@ -33,7 +29,7 @@ struct AssistantView: View {
                         }
                         .padding(16)
                     }
-                    .background(PRTheme.canvas)
+                    .background { TownBackdrop() }
                     .onChange(of: store.messages.count) {
                         if let last = store.messages.last?.id {
                             withAnimation { proxy.scrollTo(last, anchor: .bottom) }
@@ -43,7 +39,7 @@ struct AssistantView: View {
 
                 composer
             }
-            .navigationTitle("Ask Park Ridge")
+            .navigationTitle("Ask \(store.config.townName)")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear(perform: submitQueuedPromptIfNeeded)
         }
@@ -51,22 +47,39 @@ struct AssistantView: View {
 
     private var promptRail: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
+            HStack(spacing: 8) {
                 ForEach(prompts, id: \.self) { prompt in
                     Button {
                         submit(prompt)
                     } label: {
-                        Text(prompt)
-                            .font(.caption.weight(.semibold))
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                            .frame(width: 150, alignment: .leading)
-                            .padding(10)
-                            .background(PRTheme.paper, in: RoundedRectangle(cornerRadius: 8))
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "sparkles")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(PRTheme.teal)
+                                .padding(.top, 1)
+                            Text(prompt)
+                                .font(.footnote.weight(.medium))
+                                .foregroundStyle(PRTheme.ink)
+                                .lineLimit(2)
+                                .multilineTextAlignment(.leading)
+                        }
+                        .frame(width: 168, alignment: .topLeading)
+                        .padding(12)
+                        .background {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(PRTheme.paper)
+                                .shadow(color: Color.black.opacity(0.04), radius: 8, y: 3)
+                        }
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .strokeBorder(PRTheme.line, lineWidth: 1)
+                        }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(PRPressableStyle())
                 }
             }
+            .padding(.vertical, 4)
+            .padding(.horizontal, 2)
         }
     }
 
@@ -85,7 +98,7 @@ struct AssistantView: View {
 
     private var composer: some View {
         VStack(spacing: 8) {
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Button {
                     Task {
                         if voice.isRecording {
@@ -97,24 +110,49 @@ struct AssistantView: View {
                     }
                 } label: {
                     Image(systemName: voice.isRecording ? "stop.fill" : "mic.fill")
-                        .frame(width: 38, height: 38)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .frame(width: 42, height: 42)
+                        .background {
+                            Circle()
+                                .fill(voice.isRecording ? PRTheme.cranberry : PRTheme.teal)
+                                .shadow(color: (voice.isRecording ? PRTheme.cranberry : PRTheme.teal).opacity(0.30), radius: 6, y: 3)
+                        }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(voice.isRecording ? PRTheme.cranberry : PRTheme.teal)
+                .buttonStyle(PRPressableStyle())
                 .accessibilityLabel(voice.isRecording ? "Stop voice input" : "Start voice input")
 
-                TextField("Ask about Park Ridge...", text: $draft, axis: .vertical)
-                    .lineLimit(1...4)
-                    .textFieldStyle(.roundedBorder)
+                HStack(spacing: 8) {
+                    TextField("Ask about \(store.config.townName)...", text: $draft, axis: .vertical)
+                        .lineLimit(1...4)
+                        .font(.subheadline)
+                        .textFieldStyle(.plain)
 
-                Button {
-                    submit(draft)
-                } label: {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.title2)
+                    Button {
+                        submit(draft)
+                    } label: {
+                        Image(systemName: "arrow.up")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 30, height: 30)
+                            .background(
+                                draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                    ? AnyShapeStyle(PRTheme.muted.opacity(0.35))
+                                    : AnyShapeStyle(PRTheme.teal),
+                                in: Circle()
+                            )
+                    }
+                    .buttonStyle(PRPressableStyle())
+                    .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .accessibilityLabel("Send message")
                 }
-                .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .accessibilityLabel("Send message")
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(PRTheme.paper, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .strokeBorder(PRTheme.line, lineWidth: 1)
+                }
             }
 
             HStack {
@@ -124,7 +162,8 @@ struct AssistantView: View {
                 Spacer()
             }
         }
-        .padding(12)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(.regularMaterial)
     }
 
@@ -146,18 +185,29 @@ struct MessageBubble: View {
 
     private var isUser: Bool { message.role == .user }
 
+    private var bubbleShape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(
+            topLeadingRadius: 20,
+            bottomLeadingRadius: isUser ? 20 : 6,
+            bottomTrailingRadius: isUser ? 6 : 20,
+            topTrailingRadius: 20,
+            style: .continuous
+        )
+    }
+
     var body: some View {
         HStack {
-            if isUser { Spacer(minLength: 32) }
+            if isUser { Spacer(minLength: 40) }
             VStack(alignment: .leading, spacing: 8) {
                 Text(message.text)
                     .font(.subheadline)
+                    .lineSpacing(3)
                     .foregroundStyle(isUser ? .white : PRTheme.ink)
                     .textSelection(.enabled)
 
                 if !message.relatedSourceTitles.isEmpty {
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
+                        HStack(spacing: 6) {
                             ForEach(message.relatedSourceTitles, id: \.self) { title in
                                 SourceBadge(title: title)
                             }
@@ -168,19 +218,34 @@ struct MessageBubble: View {
                 if !isUser {
                     Button(action: speak) {
                         Label("Read", systemImage: "speaker.wave.2.fill")
-                            .font(.caption.weight(.bold))
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(PRTheme.teal)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(PRTheme.teal.opacity(0.10), in: Capsule())
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.mini)
+                    .buttonStyle(PRPressableStyle())
                 }
             }
-            .padding(12)
-            .background(isUser ? PRTheme.teal : PRTheme.paper, in: RoundedRectangle(cornerRadius: 8))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isUser ? Color.clear : PRTheme.line, lineWidth: 1)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background {
+                if isUser {
+                    bubbleShape
+                        .fill(PRTheme.brandGradient)
+                        .shadow(color: Color.black.opacity(0.08), radius: 8, y: 3)
+                } else {
+                    bubbleShape
+                        .fill(PRTheme.paper)
+                        .shadow(color: Color.black.opacity(0.04), radius: 8, y: 3)
+                }
             }
-            if !isUser { Spacer(minLength: 32) }
+            .overlay {
+                if !isUser {
+                    bubbleShape.strokeBorder(PRTheme.line, lineWidth: 1)
+                }
+            }
+            if !isUser { Spacer(minLength: 40) }
         }
     }
 }
