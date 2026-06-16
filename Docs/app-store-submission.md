@@ -74,6 +74,10 @@ Checked on 2026-06-16:
 - App Store Connect export succeeded with Xcode-managed provisioning enabled,
   produced `DerivedData/AppStoreExport/ParkRidgeConnect.ipa`, and the exported
   IPA is signed with Apple Distribution.
+- App Store Connect upload was attempted with Xcode-managed provisioning, but
+  App Store Connect returned no app record for bundle ID
+  `com.chrisdimarco.ParkRidgeConnect`. Create the app record first, then rerun
+  the upload command below.
 - iPhone 17 Pro Max screenshots were captured at 1320 x 2868 pixels for Today,
   Explore, Ask, and Services.
 
@@ -111,6 +115,12 @@ download managed signing assets, opt in to portal access:
 
 ```sh
 ALLOW_PROVISIONING_UPDATES=1 Tools/app-store/export_app_store_ipa.sh
+```
+
+After the App Store Connect app record exists, upload the build with:
+
+```sh
+ALLOW_PROVISIONING_UPDATES=1 Tools/app-store/upload_app_store_build.sh
 ```
 
 ## App Privacy Answers
@@ -189,6 +199,8 @@ https://developer.apple.com/help/app-store-connect/manage-app-information/upload
 - [x] App Store metadata draft is prepared in `Docs/app-store-metadata.md`.
 - [x] 6.9-inch iPhone screenshot assets are captured locally.
 - [x] App Store distribution signing/export succeeds and produces an IPA.
+- [ ] App Store Connect app record exists for `com.chrisdimarco.ParkRidgeConnect`.
+- [ ] Build is uploaded to App Store Connect.
 - [ ] App Privacy answers are published and match the exact build configuration.
 - [ ] Privacy policy and support URLs are entered in App Store Connect.
 - [ ] Screenshots are uploaded.
