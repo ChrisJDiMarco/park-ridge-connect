@@ -64,8 +64,8 @@ Checked on 2026-06-16:
   decoded Park Ridge places.
 - `Tools/place-directory/build_catalog.py` compiles and keeps the last-good
   catalog when live Overpass endpoints are unavailable.
-- `xcodebuild test` passed 29 tests on the iPhone 17 simulator, including the
-  checked-in catalog decode test.
+- `xcodebuild test` passed 30 tests on the iPhone 17 simulator, including the
+  checked-in catalog decode test and manual place-directory refresh coverage.
 - Release simulator build succeeded with store validation enabled.
 - iOS archive succeeded for bundle `com.chrisdimarco.ParkRidgeConnect`, version
   `1.0`, build `1`, minimum iOS `17.0`, and includes the production

@@ -39,7 +39,7 @@ final class TownStore {
     }
 
     private let defaults: UserDefaults
-    private let refreshService: BoroughRefreshService
+    private let refreshService: any BoroughRefreshing
     private let placeDirectoryService: any PlaceDirectoryFetching
     private let aiService: TownAIService
     private let weatherService: any WeatherFetching
@@ -56,6 +56,7 @@ final class TownStore {
     init(
         pack: TownPack = TownPackLoader.load(),
         defaults: UserDefaults = .standard,
+        refreshService: (any BoroughRefreshing)? = nil,
         weatherService: (any WeatherFetching)? = nil,
         placeDirectoryService: (any PlaceDirectoryFetching)? = nil
     ) {
@@ -75,7 +76,7 @@ final class TownStore {
         ]
         self.defaults = defaults
         self.weatherService = weatherService ?? ParkRidgeWeatherService(config: pack.config.weather)
-        self.refreshService = BoroughRefreshService(config: pack.config.refresh)
+        self.refreshService = refreshService ?? BoroughRefreshService(config: pack.config.refresh)
         self.placeDirectoryService = placeDirectoryService ?? PlaceDirectoryRefreshService(
             config: pack.config.placeDirectory ?? .parkRidgeDefault,
             defaults: defaults
@@ -236,7 +237,7 @@ final class TownStore {
         }
     }
 
-    func refresh() async {
+    func refresh(forcePlaceDirectory: Bool = false) async {
         isRefreshing = true
         defer { isRefreshing = false }
 
@@ -251,7 +252,7 @@ final class TownStore {
             refreshStatus = "Using seeded guide; borough refresh unavailable"
         }
 
-        await refreshPlaceDirectory()
+        await refreshPlaceDirectory(force: forcePlaceDirectory)
         await refreshWeather()
     }
 

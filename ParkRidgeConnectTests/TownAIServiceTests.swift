@@ -595,6 +595,36 @@ final class TownAIServiceTests: XCTestCase {
         XCTAssertTrue(store.filteredPlaces(searchText: "bakery", category: nil).contains { $0.id == livePlace.id })
         defaults.removePersistentDomain(forName: suiteName)
     }
+
+    @MainActor
+    func testManualRefreshForcesPlaceDirectoryRefresh() async {
+        let suiteName = "ParkRidgeConnectTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        let placeDirectoryService = RecordingPlaceDirectoryService(result: PlaceDirectoryRefreshResult(
+            places: ParkRidgeSeedData.places,
+            fetchedAt: juneThird2026,
+            usedCachedData: false
+        ))
+        let store = TownStore(
+            defaults: defaults,
+            refreshService: StubBoroughRefreshService(result: BoroughRefreshResult(
+                notices: [],
+                events: [],
+                alerts: [],
+                fetchedAt: juneThird2026
+            )),
+            weatherService: StubWeatherService(snapshot: sampleWeather),
+            placeDirectoryService: placeDirectoryService
+        )
+
+        await store.refresh()
+        await store.refresh(forcePlaceDirectory: true)
+
+        let forceValues = await placeDirectoryService.recordedForceValues()
+        XCTAssertEqual(forceValues, [false, true])
+        defaults.removePersistentDomain(forName: suiteName)
+    }
 }
 
 private struct CheckedInPlaceCatalog: Decodable {
@@ -609,10 +639,36 @@ private struct StubWeatherService: WeatherFetching {
     }
 }
 
+private struct StubBoroughRefreshService: BoroughRefreshing {
+    let result: BoroughRefreshResult
+
+    func refresh() async throws -> BoroughRefreshResult {
+        result
+    }
+}
+
 private struct StubPlaceDirectoryService: PlaceDirectoryFetching {
     let result: PlaceDirectoryRefreshResult
 
     func refresh(force: Bool) async throws -> PlaceDirectoryRefreshResult {
         result
+    }
+}
+
+private actor RecordingPlaceDirectoryService: PlaceDirectoryFetching {
+    private let result: PlaceDirectoryRefreshResult
+    private var forceValues: [Bool] = []
+
+    init(result: PlaceDirectoryRefreshResult) {
+        self.result = result
+    }
+
+    func refresh(force: Bool) async throws -> PlaceDirectoryRefreshResult {
+        forceValues.append(force)
+        return result
+    }
+
+    func recordedForceValues() -> [Bool] {
+        forceValues
     }
 }

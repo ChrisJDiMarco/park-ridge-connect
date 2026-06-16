@@ -1,8 +1,12 @@
 import Foundation
 
+protocol BoroughRefreshing {
+    func refresh() async throws -> BoroughRefreshResult
+}
+
 /// Scrapes the town's official homepage for live news, calendar, and alert
 /// lines. Section markers and alert keywords come from `RefreshConfig`.
-struct BoroughRefreshService {
+struct BoroughRefreshService: BoroughRefreshing {
     private let config: RefreshConfig
     private let referenceDate: Date
     private let calendar: Calendar

@@ -30,7 +30,7 @@ struct HomeView: View {
                 }
             }
             .refreshable {
-                await store.refresh()
+                await store.refresh(forcePlaceDirectory: true)
             }
         }
     }
