@@ -16,6 +16,7 @@ SIMULATOR_DESTINATION="${SIMULATOR_DESTINATION:-platform=iOS Simulator,name=iPho
 MINIMUM_PLACE_COUNT="${MINIMUM_PLACE_COUNT:-50}"
 
 failures=0
+distribution_signing_available=0
 
 log() {
   printf '\n==> %s\n' "$1"
@@ -243,6 +244,7 @@ run_export() {
 
   if grep -q 'Authority=Apple Distribution:' <<<"$signature"; then
     pass "Exported IPA is signed with Apple Distribution"
+    distribution_signing_available=1
   else
     fail "Exported IPA is not signed with Apple Distribution"
     printf '%s\n' "$signature" | grep 'Authority=' || true
@@ -256,8 +258,10 @@ check_signing_identity() {
   printf '%s\n' "$identities"
   if grep -q 'Apple Distribution:' <<<"$identities"; then
     pass "Apple Distribution identity is installed"
+  elif (( distribution_signing_available == 1 )); then
+    pass "Apple Distribution signing is available through Xcode-managed App Store export"
   else
-    fail "Apple Distribution identity is not installed"
+    fail "Apple Distribution signing is not available locally or through App Store export"
   fi
 }
 

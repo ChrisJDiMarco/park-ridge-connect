@@ -71,18 +71,18 @@ Checked on 2026-06-16:
 - iOS archive succeeded for bundle `com.chrisdimarco.ParkRidgeConnect`, version
   `1.0`, build `1`, minimum iOS `17.0`, and includes the production
   `TOWN_PLACE_CATALOG_URL` in its generated Info.plist.
-- App Store Connect export is configured, but currently fails locally with
-  `No profiles for 'com.chrisdimarco.ParkRidgeConnect' were found` until an
-  Apple Distribution identity and App Store provisioning profile are available.
+- App Store Connect export succeeded with Xcode-managed provisioning enabled,
+  produced `DerivedData/AppStoreExport/ParkRidgeConnect.ipa`, and the exported
+  IPA is signed with Apple Distribution.
 - iPhone 17 Pro Max screenshots were captured at 1320 x 2868 pixels for Today,
   Explore, Ask, and Services.
 
-The current local environment is not ready to create an uploadable IPA because
-only `Apple Development: Chris DiMarco (R5FQ2HG7F5)` is installed and no Apple
-Distribution identity is installed locally. With automatic signing, the raw
-`.xcarchive` may be development-signed; the final submission gate is that the
-App Store Connect export succeeds and the exported IPA is signed with Apple
-Distribution.
+The local keychain currently shows only
+`Apple Development: Chris DiMarco (R5FQ2HG7F5)`, but Xcode-managed App Store
+export can still create an Apple Distribution-signed IPA. With automatic
+signing, the raw `.xcarchive` may be development-signed; the final submission
+gate is that the App Store Connect export succeeds and the exported IPA is
+signed with Apple Distribution.
 
 Run the local gate before submission:
 
@@ -92,9 +92,13 @@ Tools/app-store/verify_submission_readiness.sh
 
 The script checks local catalog JSON, the live catalog/privacy/support URLs,
 App Store screenshots, simulator tests, archive Info.plist values, and App
-Store Connect IPA export/signing. It is expected to fail until an Apple
-Distribution identity is installed and the archive exports for App Store
-Connect.
+Store Connect IPA export/signing. On this machine, use
+`ALLOW_PROVISIONING_UPDATES=1` so Xcode can create or download managed signing
+assets during export:
+
+```sh
+ALLOW_PROVISIONING_UPDATES=1 Tools/app-store/verify_submission_readiness.sh
+```
 
 Export an uploadable IPA with:
 
@@ -184,7 +188,7 @@ https://developer.apple.com/help/app-store-connect/manage-app-information/upload
 - [x] Public support URL exists.
 - [x] App Store metadata draft is prepared in `Docs/app-store-metadata.md`.
 - [x] 6.9-inch iPhone screenshot assets are captured locally.
-- [ ] App Store distribution signing/export succeeds and produces an IPA.
+- [x] App Store distribution signing/export succeeds and produces an IPA.
 - [ ] App Privacy answers are published and match the exact build configuration.
 - [ ] Privacy policy and support URLs are entered in App Store Connect.
 - [ ] Screenshots are uploaded.
