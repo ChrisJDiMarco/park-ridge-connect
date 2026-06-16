@@ -32,11 +32,12 @@ directly through `PlaceDirectoryRefreshService`.
 
 ## Production setup
 
-1. The repository includes `.github/workflows/update-place-catalog.yml`, which
-   refreshes `Docs/place-directory/park-ridge-places.json` daily.
-2. Publish `Docs/place-directory/park-ridge-places.json` to a stable public
-   HTTPS URL. The repository is private right now, so a raw GitHub URL will not
-   work for App Review unless the repository is made public.
+1. The public `ChrisJDiMarco/park-ridge-connect-catalog` repository includes
+   `.github/workflows/update-place-catalog.yml`, which refreshes
+   `docs/place-directory/park-ridge-places.json` daily.
+2. Publish `docs/place-directory/park-ridge-places.json` to a stable public
+   HTTPS URL. The app repository is private, so a raw URL from this repository
+   will not work for App Review.
 3. Set the app target build setting `TOWN_PLACE_CATALOG_URL` to that HTTPS URL
    before App Store submission. The app target injects this into Info.plist as
    `TOWN_PLACE_CATALOG_URL` during the build.

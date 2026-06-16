@@ -5,10 +5,10 @@ the `TOWN_PLACE_CATALOG_URL` build setting.
 
 ## Publishing
 
-The scheduled GitHub Actions workflow refreshes this JSON daily from
+The scheduled GitHub Actions workflow in
+`ChrisJDiMarco/park-ridge-connect-catalog` refreshes this JSON daily from
 OpenStreetMap/Overpass and commits a new copy only when the catalog changes.
-The Pages deployment workflow publishes only the place catalog files into a
-small `_site` artifact when Pages is enabled for the repository.
+GitHub Pages publishes that public repo's `docs/` folder.
 
 Because the repository is private, do not use a `raw.githubusercontent.com`
 URL for App Review unless the repository is made public. Use one of these
