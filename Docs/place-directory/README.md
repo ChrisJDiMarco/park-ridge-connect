@@ -37,3 +37,7 @@ catalog without authentication.
 
 Before submitting to App Review, open the final URL in a private/incognito
 browser and confirm it returns this JSON without authentication.
+
+## Data license
+
+Place data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), available under the [Open Database License (ODbL 1.0)](https://opendatacommons.org/licenses/odbl/1-0/). Supplemental records in `park-ridge-supplemental-places.json` were curated by Chris DiMarco. Any code license added to this repository does not cover this folder's data.

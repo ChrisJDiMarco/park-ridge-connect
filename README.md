@@ -39,3 +39,8 @@ xcrun simctl launch booted com.chrisdimarco.ParkRidgeConnect
 
 See `Tools/place-directory/README.md` and `Docs/app-store-submission.md` for the
 production URL and submission checklist.
+
+## Credits
+
+- Town backdrop image (`ParkRidgeConnect/Resources/Assets.xcassets/TownBackdrop.imageset`): original artwork made for this app by Chris DiMarco.
+- Place data © OpenStreetMap contributors, ODbL 1.0. See [Docs/place-directory/README.md](Docs/place-directory/README.md).
